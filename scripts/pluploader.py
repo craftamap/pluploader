@@ -10,6 +10,20 @@ HOST="localhost:8090"
 
 PATH = "/rest/plugins/1.0/"
 
+
+SCANDIO = """ssssss....
+ SSSSSSSSSSSSSSS.
+  SSSSS°°°   °°SSs
+  SSSS          SSS
+  SSS            SSS
+  SSS     cc     SSS
+  SSS.    °°    .SSS
+   SSS          SSS
+    SSSs      sSSS
+     °SSSSssSSS°
+         °°°°
+"""
+
 def get_filename_from_pom():
     ns = {"ns":"http://maven.apache.org/POM/4.0.0"}
     root = ET.parse('pom.xml').getroot()
@@ -19,6 +33,7 @@ def get_filename_from_pom():
 
 
 def main():
+    print(SCANDIO)
     try:
         plugin_name = get_filename_from_pom()
 
