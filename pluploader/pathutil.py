@@ -4,9 +4,25 @@
 import typing
 import os
 import os.path
+import xml.etree.ElementTree as ET
+
+def get_jar_from_pom():
+    """ Get jar to upload based on maven pom
+
+    This function reads the pom and analyses which artifact was build by the last
+    `mvn package` command. If the file exists, the file will be returned
+    """
+    rootdir = find_maven_project_root(".")
+    namespace = {"ns":"http://maven.apache.org/POM/4.0.0"}
+
+    root = ET.parse(f'{rootdir}/pom.xml').getroot()
+    artifact_id = root.find("ns:artifactId", namespace).text
+    version = root.find("ns:version", namespace).text
+
+    return open(f"{rootdir}/target/{artifact_id}-{version}.jar", "rb")
 
 
-def find_maven_project_root(working_path: os.PathLike = ".") -> typing.Union[os.PathLike,bool]:
+def find_maven_project_root(working_path: os.PathLike = ".") -> typing.Union[os.PathLike, bool]:
     """Tries to find a maven project root directory.
 
     Tries to find a maven project root directory if the current path is a

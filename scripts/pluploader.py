@@ -1,10 +1,11 @@
 import requests
-import xml.etree.ElementTree as ET
+from requests.auth import HTTPBasicAuth
 import json
 import time
 from tqdm import tqdm
 from colorama import Fore
 from pluploader import pathutil
+from pluploader import upmapi as upm
 import configargparse
 import os.path
 from furl import furl
@@ -30,15 +31,6 @@ SSS.    {Fore.WHITE}°°{Fore.YELLOW}    .SSS
 {Fore.LIGHTGREEN_EX}  ssss{Fore.YELLOW}sssss{Fore.RESET}
 """
 
-def get_filename_from_pom():
-    rootdir = pathutil.find_maven_project_root(".")
-    ns = {"ns":"http://maven.apache.org/POM/4.0.0"}
-    root = ET.parse(f'{rootdir}/pom.xml').getroot()
-    artifactId =  root.find("ns:artifactId", ns).text
-    version =  root.find("ns:version", ns).text
-    return f"{artifactId}-{version}.jar"
-
-
 def main():
     print(LOGO)
     project_root = pathutil.find_maven_project_root(".")
@@ -56,46 +48,26 @@ def main():
     p.add("-f", "--file", type=configargparse.FileType("rb"))
     args = p.parse_args()
 
+    request_base = upm.RequestBase(scheme=args.scheme, host=args.host, port=args.port,
+                                   user=args.user, password=args.password)
     try:
-        token_url = furl()
-        token_url.set(scheme=args.scheme, host=args.host, port=args.port, path=PATH)
-        token_url.set(username= args.user, password=args.password)
-        token_url.set(args={"os_authType":"basic"})
-        print(token_url)
-        token_response = requests.head(token_url.url)
-        token = token_response.headers['upm-token']
-        print(token)
+        token = upm.get_token(request_base)
         files = {}
         if args.file is None:
-            plugin_name = get_filename_from_pom()
+            plugin_name = pathutil.get_jar_from_pom()
             files.update({'plugin': open(f"target/{plugin_name}", 'rb')})
         else:
             files.update({'plugin': args.file})
-        upload_url = furl()
-        upload_url.set(scheme=args.scheme, host=args.host, port=args.port, path=PATH)
-        upload_url.set(username=args.user, password=args.password)
-        upload_url.set(args={"token": token})
         with TqdmUpTo(total=100) as pbar:
             pbar.update_to(0)
-            upload_response = requests.post(upload_url.url, files=files)
-            pbar.update_to(50)
-            upload_response_data = json.loads(upload_response.text.replace("<textarea>", "").replace("</textarea>", ""))
-            while True:
-                if ("type" in upload_response_data):
-                    pbar.update_to(upload_response_data["status"]["amountDownloaded"] if "amountDownloaded" in upload_response_data["status"] else 0)
-                    time.sleep(upload_response_data['pingAfter']/200)
-                    upload_url = furl()
-                    upload_url.set(scheme=args.scheme, host=args.host, port=args.port, path=upload_response_data["links"]["self"])
-                    upload_url.set(username=args.user, password=args.password)
-                    upload_response_data = requests.get(upload_url.url).json()
-                else:
-                    pbar.update_to(100)
-                    break
-        print ("Plugin hochgeladen und "+("enabled" if upload_response_data["enabled"] else "disabled")+"!")
+            progress, previous_request = upm.upload_plugin(request_base, files, token)
+            while progress != 100:
+                progress, previous_request = upm.get_current_progress(request_base,
+                                                                      previous_request)
+                pbar.update_to(progress)
+        print("Plugin hochgeladen und "+("enabled" if previous_request["enabled"] else "disabled")+"!")
     except Exception as e:
-        print(e)
-    finally:
-        pass
+        raise e
 
 
 
