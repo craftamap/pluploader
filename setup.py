@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="sc-pluploader-fsiegel",
+    name="pluploader",
     version="0.0.1",
     author="Fabian Siegel, Scandio GmbH",
     author_email="fabian.siegel@scandio.de",
@@ -12,7 +12,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://git.scandio.de/users/fsiegel/repos/sc-pluploader/browse",
-    packages=["scripts"],
+    packages=setuptools.find_packages(),
     entry_points={
         "console_scripts": ["pluploader=scripts.pluploader:main"],
     }

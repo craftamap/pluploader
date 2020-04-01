@@ -3,6 +3,11 @@ import xml.etree.ElementTree as ET
 import json
 import time
 from tqdm import tqdm
+from colorama import Fore
+from pluploader import pathutil
+import configargparse
+import os.path
+from furl import furl
 
 USER = "admin"
 PASSWD = "admin"
@@ -11,22 +16,24 @@ HOST="localhost:8090"
 PATH = "/rest/plugins/1.0/"
 
 
-SCANDIO = """ssssss....
- SSSSSSSSSSSSSSS.
-  SSSSS°°°   °°SSs
-  SSSS          SSS
-  SSS            SSS
-  SSS     cc     SSS
-  SSS.    °°    .SSS
-   SSS          SSS
-    SSSs      sSSS
-     °SSSSssSSS°
-         °°°°
+SCANDIO = f"""{Fore.RED}
+SSSSssssss...
+SSSSSSSSSSSSSS.
+SSSSS°°°   °°SSs
+SSSS          SSS
+SSS            SSS
+SSS     cc     SSS
+SSS.    °°    .SSS
+ SSS          SSS
+  SSSs      sSSS
+   °SSSSssSSS°
+       °°°°{Fore.RESET}
 """
 
 def get_filename_from_pom():
+    rootdir = pathutil.find_maven_project_root(".")
     ns = {"ns":"http://maven.apache.org/POM/4.0.0"}
-    root = ET.parse('pom.xml').getroot()
+    root = ET.parse(f'{rootdir}/pom.xml').getroot()
     artifactId =  root.find("ns:artifactId", ns).text
     version =  root.find("ns:version", ns).text
     return f"{artifactId}-{version}.jar"
@@ -34,21 +41,53 @@ def get_filename_from_pom():
 
 def main():
     print(SCANDIO)
-    try:
-        plugin_name = get_filename_from_pom()
+    project_root = pathutil.find_maven_project_root(".")
+    config_locations = ["~/.pluprc"]
 
-        token_response = requests.head(f"http://{USER}:{PASSWD}@{HOST}{PATH}?os_authType=basic")
+    if project_root is not False:
+        config_locations.append(os.path.join(project_root, ".pluprc"))
+    p = configargparse.ArgParser(default_config_files=config_locations,
+                                 config_file_parser_class=configargparse.YAMLConfigFileParser)
+    p.add("--host", default="localhost")
+    p.add("--scheme", default="http")
+    p.add("--user", required=True)
+    p.add("--password", required=True)
+    p.add("--port", default="8090")
+    p.add("-f", "--file", type=configargparse.FileType("rb"))
+    args = p.parse_args()
+
+    try:
+        token_url = furl()
+        token_url.set(scheme=args.scheme, host=args.host, port=args.port, path=PATH)
+        token_url.set(username= args.user, password=args.password)
+        token_url.set(args={"os_authType":"basic"})
+        print(token_url)
+        token_response = requests.head(token_url.url)
         token = token_response.headers['upm-token']
         print(token)
-        files={'plugin': open(f"target/{plugin_name}", 'rb')}
-        upload_response = requests.post(f"http://{USER}:{PASSWD}@{HOST}{PATH}?token={token}", files=files)
-        upload_response_data = json.loads(upload_response.text.replace("<textarea>", "").replace("</textarea>", ""))
+        files = {}
+        if args.file is None:
+            plugin_name = get_filename_from_pom()
+            files.update({'plugin': open(f"target/{plugin_name}", 'rb')})
+        else:
+            files.update({'plugin': args.file})
+        upload_url = furl()
+        upload_url.set(scheme=args.scheme, host=args.host, port=args.port, path=PATH)
+        upload_url.set(username=args.user, password=args.password)
+        upload_url.set(args={"token": token})
         with TqdmUpTo(total=100) as pbar:
+            pbar.update_to(0)
+            upload_response = requests.post(upload_url.url, files=files)
+            pbar.update_to(50)
+            upload_response_data = json.loads(upload_response.text.replace("<textarea>", "").replace("</textarea>", ""))
             while True:
                 if ("type" in upload_response_data):
-                    pbar.update_to(((upload_response_data["status"]["amountDownloaded"] -50)*2) if "amountDownloaded" in upload_response_data["status"] else 0)
+                    pbar.update_to(upload_response_data["status"]["amountDownloaded"] if "amountDownloaded" in upload_response_data["status"] else 0)
                     time.sleep(upload_response_data['pingAfter']/200)
-                    upload_response_data = requests.get(f"http://{USER}:{PASSWD}@{HOST}"+upload_response_data["links"]["self"]).json()
+                    upload_url = furl()
+                    upload_url.set(scheme=args.scheme, host=args.host, port=args.port, path=upload_response_data["links"]["self"])
+                    upload_url.set(username=args.user, password=args.password)
+                    upload_response_data = requests.get(upload_url.url).json()
                 else:
                     pbar.update_to(100)
                     break
@@ -76,6 +115,7 @@ class TqdmUpTo(tqdm):
         if tsize is not None:
             self.total = tsize
         self.update(b * bsize - self.n)  # will also set self.n = b * bsize
+
 
 
 if __name__ == "__main__":
