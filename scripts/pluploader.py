@@ -16,18 +16,18 @@ HOST="localhost:8090"
 PATH = "/rest/plugins/1.0/"
 
 
-SCANDIO = f"""{Fore.RED}
-SSSSssssss...
-SSSSSSSSSSSSSS.
-SSSSS°°°   °°SSs
-SSSS          SSS
-SSS            SSS
-SSS     cc     SSS
-SSS.    °°    .SSS
+LOGO = f"""{Fore.YELLOW}
+SSSSssssss...   {Fore.RED}s{Fore.RESET}
+{Fore.YELLOW}SSSSSSSSSSSSSss{Fore.RED}sSs{Fore.RESET}
+{Fore.YELLOW}SSSSS°°°   °°SSS{Fore.RED}SS{Fore.RESET}
+{Fore.YELLOW}SSSS    {Fore.WHITE}..{Fore.YELLOW}    SSS{Fore.RED}S{Fore.RESET}
+{Fore.YELLOW}SSS    {Fore.WHITE}ssss{Fore.YELLOW}    SSS
+SSS     {Fore.WHITE}cc{Fore.YELLOW}     SSS
+SSS.    {Fore.WHITE}°°{Fore.YELLOW}    .SSS
  SSS          SSS
-  SSSs      sSSS
-   °SSSSssSSS°
-       °°°°{Fore.RESET}
+ SSSSs      sSSS
+{Fore.LIGHTGREEN_EX}sSS{Fore.YELLOW}SSSSSssSSS°
+{Fore.LIGHTGREEN_EX}  ssss{Fore.YELLOW}sssss{Fore.RESET}
 """
 
 def get_filename_from_pom():
@@ -40,7 +40,7 @@ def get_filename_from_pom():
 
 
 def main():
-    print(SCANDIO)
+    print(LOGO)
     project_root = pathutil.find_maven_project_root(".")
     config_locations = ["~/.pluprc"]
 

@@ -15,5 +15,13 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     entry_points={
         "console_scripts": ["pluploader=scripts.pluploader:main"],
-    }
+    },
+    install_requires=[
+        "requests",
+        "tqdm",
+        "colorama",
+        "configargparse",
+        "furl",
+        "PyYAML"
+    ]
 )
