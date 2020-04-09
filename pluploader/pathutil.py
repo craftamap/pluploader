@@ -6,7 +6,7 @@ import os
 import os.path
 import xml.etree.ElementTree as ET
 
-def get_jar_from_pom():
+def get_jar_from_pom() -> typing.BinaryIO:
     """ Get jar to upload based on maven pom
 
     This function reads the pom and analyses which artifact was build by the last
@@ -19,7 +19,8 @@ def get_jar_from_pom():
     artifact_id = root.find("ns:artifactId", namespace).text
     version = root.find("ns:version", namespace).text
 
-    return open(f"{rootdir}/target/{artifact_id}-{version}.jar", "rb")
+    filepath = os.path.join(rootdir, "target", f"{artifact_id}-{version}.jar")
+    return open(filepath, "rb")
 
 
 def find_maven_project_root(working_path: os.PathLike = ".") -> typing.Union[os.PathLike, bool]:

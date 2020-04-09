@@ -1,18 +1,15 @@
+""" pluploader executable
+"""
+
 import time
+import sys
+import os.path
+import configargparse
 from tqdm import tqdm
 from colorama import Fore
+
 from pluploader import pathutil
 from pluploader import upmapi as upm
-import configargparse
-import os.path
-from furl import furl
-
-USER = "admin"
-PASSWD = "admin"
-HOST="localhost:8090"
-
-PATH = "/rest/plugins/1.0/"
-
 
 LOGO = f"""{Fore.YELLOW}
 SSSSssssss...   {Fore.RED}s{Fore.RESET}
@@ -27,6 +24,7 @@ SSS.    {Fore.WHITE}°°{Fore.YELLOW}    .SSS
 {Fore.LIGHTGREEN_EX}sSS{Fore.YELLOW}SSSSSssSSS°
 {Fore.LIGHTGREEN_EX}  ssss{Fore.YELLOW}sssss{Fore.RESET}
 """
+
 
 class TqdmUpTo(tqdm):
     """Provides `update_to(n)` which uses `tqdm.update(delta_n)`."""
@@ -45,14 +43,17 @@ class TqdmUpTo(tqdm):
 
 
 def main():
+    """ Main method
+    """
     print(LOGO)
     project_root = pathutil.find_maven_project_root(".")
     config_locations = ["~/.pluprc"]
 
     if project_root is not False:
         config_locations.append(os.path.join(project_root, ".pluprc"))
-    p = configargparse.ArgParser(default_config_files=config_locations,
-                                 config_file_parser_class=configargparse.YAMLConfigFileParser)
+    p = configargparse.ArgParser(
+        default_config_files=config_locations,
+        config_file_parser_class=configargparse.YAMLConfigFileParser)
     p.add("--host", default="localhost")
     p.add("--scheme", default="http")
     p.add("--user", required=True)
@@ -67,38 +68,44 @@ def main():
 def run(args):
     """ Actual code of the pluploader
     """
-    request_base = upm.RequestBase(scheme=args.scheme, host=args.host, port=args.port,
-                                   user=args.user, password=args.password)
+    request_base = upm.RequestBase(scheme=args.scheme,
+                                   host=args.host,
+                                   port=args.port,
+                                   user=args.user,
+                                   password=args.password)
     try:
         files = {}
         if args.file is None:
             plugin = pathutil.get_jar_from_pom()
+            if plugin is None:
+                print("File not found!")
+                sys.exit(1)
             files.update({'plugin': plugin})
         else:
             files.update({'plugin': args.file})
 
-        print(f"{os.path.basename(files.get('plugin').name)} will be uploaded to {request_base.host}:{request_base.port}")
-        if(args.interactive):
-            confirm = input("Do you really want to upload and install the plugin? (y/N) ")
+        print(f"{os.path.basename(files.get('plugin').name)} will be uploaded \
+to {request_base.host}:{request_base.port}")
+        if args.interactive:
+            confirm = input(
+                "Do you really want to upload and install the plugin? (y/N) ")
             if confirm.lower() != "y":
-                exit(0)
+                sys.exit()
 
         token = upm.get_token(request_base)
         with TqdmUpTo(total=100) as pbar:
             pbar.update_to(0)
-            progress, previous_request = upm.upload_plugin(request_base, files, token)
+            progress, previous_request = upm.upload_plugin(
+                request_base, files, token)
             while progress != 100:
-                progress, previous_request = upm.get_current_progress(request_base,
-                                                                      previous_request)
+                progress, previous_request = upm.get_current_progress(
+                    request_base, previous_request)
                 pbar.update_to(progress)
                 time.sleep(0.1)
-        print("Plugin hochgeladen und "+
-              ("enabled" if previous_request["enabled"] else "disabled")
-              +"!")
+        print("plugin uploaded and " +
+              ("enabled" if previous_request["enabled"] else "disabled") + "!")
     except Exception as e:
         raise e
-
-
 
 
 if __name__ == "__main__":
