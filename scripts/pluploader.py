@@ -55,8 +55,19 @@ def main():
         default_config_files=config_locations,
         config_file_parser_class=configargparse.YAMLConfigFileParser)
     commandparser = p.add_subparsers(dest="command")
+
+    listparser = commandparser.add_parser("list")
+    listparser.add_argument("--all",
+                            help="Print all plugins instead of only user installed plugins",
+                            action="store_true",
+                            default=False,
+                            dest="print_all"
+                            )
+
+    infoparser = commandparser.add_parser("info")
+    infoparser.add_argument("plugin")
+
     commandparser.add_parser("install")
-    commandparser.add_parser("list")
 
     p.add("--host", default="localhost")
     p.add("--scheme", default="http")
@@ -68,21 +79,35 @@ def main():
     args = p.parse_args()
     if(args.command == "list"):
         list_all(args)
+    elif(args.command == "info"):
+        plugin_info(args)
     else:
         install(args)
 
 def list_all(args):
+    """ Prints out basic plugin informations of all plugins"""
     request_base = upm.RequestBase(scheme=args.scheme,
                                    host=args.host,
                                    port=args.port,
                                    user=args.user,
                                    password=args.password)
-    all_plugins = upm.get_all_plugins(request_base)
+    all_plugins = upm.get_all_plugins(request_base, not args.print_all)
     print(f"  {'Name':25} {'Version':13} {'Plugin Key':50}")
     for plugin in all_plugins:
         status = f"{Fore.GREEN}✓{Fore.RESET}" if plugin.enabled else f"{Fore.YELLOW}!{Fore.RESET}"
-        plugin_info = f"{status} {plugin.name[:25]:25} {str(plugin.version)[:13]:13} ({plugin.key:50})"
-        print(plugin_info)
+        plugin_infos = f"{status} {plugin.name[:25]:25}"\
+            +f" {str(plugin.version)[:13]:13} ({plugin.key})"
+        print(plugin_infos)
+
+def plugin_info(args):
+    request_base = upm.RequestBase(scheme=args.scheme,
+                                   host=args.host,
+                                   port=args.port,
+                                   user=args.user,
+                                   password=args.password)
+    info = upm.get_plugin(request_base, args.plugin)
+    for key, value in info.__dict__.items():
+        print(f"{key:20}: {value}")
 
 def install(args):
     """ Actual code of the pluploader

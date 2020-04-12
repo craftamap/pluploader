@@ -23,6 +23,7 @@ class RequestBase():
     password: str
     scheme: str = "http"
 
+
 @dataclasses.dataclass
 class PluginDto:
     """ This class represents a plugin given by the UPM/Plugin API
@@ -36,14 +37,21 @@ class PluginDto:
 
     @classmethod
     def from_dict(cls, env):
+        """ creates PluginDto from a dict and ignores unknown keys
+        """
         return cls(**{
-            k: v for k, v in env.items()
-            if k in inspect.signature(cls).parameters
+            k: v
+            for k, v in env.items() if k in inspect.signature(cls).parameters
         })
 
     @staticmethod
     def decode(obj: dict) -> typing.Union['PluginDto', dict]:
-        if "name" in obj and "key" in obj:
+        if "name" in obj \
+        and "key" in obj \
+        and "version" in obj \
+        and "enabled" in obj \
+        and "userInstalled" in obj \
+        and "description" in obj:
             return PluginDto.from_dict(obj)
         return obj
 
@@ -96,25 +104,45 @@ def get_current_progress(request_base: RequestBase,
     progress_rd = requests.get(
         progress_url.url,
         auth=HTTPBasicAuth(request_base.user, request_base.password)).json()
-    if ("type" in progress_rd):
+    if "type" in progress_rd:
         progress = int(
             progress_rd.get("status", {}).get("amountDownloaded", 0))
         return (progress, progress_rd)
     return (100, progress_rd)
 
 
-def get_all_plugins(request_base: RequestBase, user_installed: bool = True):
+def get_all_plugins(request_base: RequestBase,
+                    user_installed: bool = True) -> typing.List['PluginDto']:
+    """ Gets a list of all installed plugins from the api and returns it
+    If user_installed is set true (default), only user installed plugins are listed
+    """
     request_url = furl()
     request_url.set(scheme=request_base.scheme,
-                  host=request_base.host,
-                  port=request_base.port,
-                  path=PATH)
-    request_url.set(args={"os_authType": "basic"})
+                    host=request_base.host,
+                    port=request_base.port,
+                    path=PATH)
     response = requests.get(request_url.url,
-                                  auth=HTTPBasicAuth(request_base.user,
-                                                     request_base.password))
+                            auth=HTTPBasicAuth(request_base.user,
+                                               request_base.password))
     return_obj = response.json(object_hook=PluginDto.decode)["plugins"]
     if user_installed:
         return_obj = filter(lambda x: x.userInstalled, return_obj)
+    return return_obj
+
+
+def get_plugin(request_base: RequestBase, plugin_key: str) -> 'PluginDto':
+    """ Gets Plugin info by using the PATH/plugin-key/ endpoint and
+    returns it as a PluginDto
+    """
+    request_url = furl()
+    request_url.set(scheme=request_base.scheme,
+                    host=request_base.host,
+                    port=request_base.port,
+                    path=PATH)
+    request_url.join(plugin_key + "-key")
+    response = requests.get(request_url.url,
+                            auth=HTTPBasicAuth(request_base.user,
+                                               request_base.password))
+    return_obj = response.json(object_hook=PluginDto.decode)
     return return_obj
 
