@@ -3,12 +3,15 @@
 
 import typing
 import dataclasses
+import json
+import inspect
 from furl import furl
 import requests
 from requests.auth import HTTPBasicAuth
-import json
+from packaging import version
 
 PATH = "/rest/plugins/1.0/"
+
 
 @dataclasses.dataclass
 class RequestBase():
@@ -20,45 +23,98 @@ class RequestBase():
     password: str
     scheme: str = "http"
 
+@dataclasses.dataclass
+class PluginDto:
+    """ This class represents a plugin given by the UPM/Plugin API
+    """
+    key: str
+    name: str
+    version: version.Version
+    enabled: bool
+    userInstalled: bool
+    description: str
+
+    @classmethod
+    def from_dict(cls, env):
+        return cls(**{
+            k: v for k, v in env.items()
+            if k in inspect.signature(cls).parameters
+        })
+
+    @staticmethod
+    def decode(obj: dict) -> typing.Union['PluginDto', dict]:
+        if "name" in obj and "key" in obj:
+            return PluginDto.from_dict(obj)
+        return obj
+
+
 def get_token(request_base: RequestBase) -> str:
     """ Get token from api endpoint
     """
     token_url = furl()
-    token_url.set(scheme=request_base.scheme, host=request_base.host,
-                  port=request_base.port, path=PATH)
-    token_url.set(args={"os_authType":"basic"})
+    token_url.set(scheme=request_base.scheme,
+                  host=request_base.host,
+                  port=request_base.port,
+                  path=PATH)
+    token_url.set(args={"os_authType": "basic"})
     token_response = requests.head(token_url.url,
-                                   auth=HTTPBasicAuth(request_base.user, request_base.password)
-                                   )
+                                   auth=HTTPBasicAuth(request_base.user,
+                                                      request_base.password))
     token = token_response.headers['upm-token']
     return token
 
 
-def upload_plugin(request_base: RequestBase, files: typing.Dict, token: str) -> str:
+def upload_plugin(request_base: RequestBase, files: typing.Dict,
+                  token: str) -> str:
     """ Upload plugin
     """
     upload_url = furl()
-    upload_url.set(scheme=request_base.scheme, host=request_base.host,
-                   port=request_base.port, path=PATH)
+    upload_url.set(scheme=request_base.scheme,
+                   host=request_base.host,
+                   port=request_base.port,
+                   path=PATH)
     upload_url.set(args={"token": token})
-    upload_response = requests.post(upload_url.url, files=files,
-                                    auth=HTTPBasicAuth(request_base.user, request_base.password)
-                                    )
-    text = upload_response.text.replace("<textarea>", "").replace("</textarea>", "")
+    upload_response = requests.post(upload_url.url,
+                                    files=files,
+                                    auth=HTTPBasicAuth(request_base.user,
+                                                       request_base.password))
+    text = upload_response.text.replace("<textarea>",
+                                        "").replace("</textarea>", "")
     upload_response_data = json.loads(text)
-    progress = int(upload_response_data.get("status", {}).get("amountDownloaded", 0))
+    progress = int(
+        upload_response_data.get("status", {}).get("amountDownloaded", 0))
     return (progress, upload_response_data)
 
 
-def get_current_progress(request_base: RequestBase, previous_request) -> (int, typing.Dict):
+def get_current_progress(request_base: RequestBase,
+                         previous_request) -> (int, typing.Dict):
     progress_url = furl()
-    progress_url.set(scheme=request_base.scheme, host=request_base.host,
+    progress_url.set(scheme=request_base.scheme,
+                     host=request_base.host,
                      port=request_base.port,
                      path=previous_request["links"]["self"])
-    progress_rd = requests.get(progress_url.url,
-                               auth=HTTPBasicAuth(request_base.user, request_base.password)
-                              ).json()
+    progress_rd = requests.get(
+        progress_url.url,
+        auth=HTTPBasicAuth(request_base.user, request_base.password)).json()
     if ("type" in progress_rd):
-        progress = int(progress_rd.get("status", {}).get("amountDownloaded", 0))
+        progress = int(
+            progress_rd.get("status", {}).get("amountDownloaded", 0))
         return (progress, progress_rd)
     return (100, progress_rd)
+
+
+def get_all_plugins(request_base: RequestBase, user_installed: bool = True):
+    request_url = furl()
+    request_url.set(scheme=request_base.scheme,
+                  host=request_base.host,
+                  port=request_base.port,
+                  path=PATH)
+    request_url.set(args={"os_authType": "basic"})
+    response = requests.get(request_url.url,
+                                  auth=HTTPBasicAuth(request_base.user,
+                                                     request_base.password))
+    return_obj = response.json(object_hook=PluginDto.decode)["plugins"]
+    if user_installed:
+        return_obj = filter(lambda x: x.userInstalled, return_obj)
+    return return_obj
+

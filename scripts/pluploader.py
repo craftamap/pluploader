@@ -54,6 +54,10 @@ def main():
     p = configargparse.ArgParser(
         default_config_files=config_locations,
         config_file_parser_class=configargparse.YAMLConfigFileParser)
+    commandparser = p.add_subparsers(dest="command")
+    commandparser.add_parser("install")
+    commandparser.add_parser("list")
+
     p.add("--host", default="localhost")
     p.add("--scheme", default="http")
     p.add("--user", required=True)
@@ -62,10 +66,25 @@ def main():
     p.add("-i", "--interactive", default=False, action='store_true')
     p.add("-f", "--file", type=configargparse.FileType("rb"))
     args = p.parse_args()
-    run(args)
+    if(args.command == "list"):
+        list_all(args)
+    else:
+        install(args)
 
+def list_all(args):
+    request_base = upm.RequestBase(scheme=args.scheme,
+                                   host=args.host,
+                                   port=args.port,
+                                   user=args.user,
+                                   password=args.password)
+    all_plugins = upm.get_all_plugins(request_base)
+    print(f"  {'Name':25} {'Version':13} {'Plugin Key':50}")
+    for plugin in all_plugins:
+        status = f"{Fore.GREEN}✓{Fore.RESET}" if plugin.enabled else f"{Fore.YELLOW}!{Fore.RESET}"
+        plugin_info = f"{status} {plugin.name[:25]:25} {str(plugin.version)[:13]:13} ({plugin.key:50})"
+        print(plugin_info)
 
-def run(args):
+def install(args):
     """ Actual code of the pluploader
     """
     request_base = upm.RequestBase(scheme=args.scheme,
