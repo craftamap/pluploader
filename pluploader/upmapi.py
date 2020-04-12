@@ -179,3 +179,19 @@ def _modify_plugin(request_base: RequestBase, plugin_key: str,
                             headers=headers)
     return_obj = response.json(object_hook=PluginDto.decode)
     return return_obj
+
+def uninstall_plugin(request_base: RequestBase, plugin_key: str) -> bool:
+    """ Uninstalls a plugin by using the PATH/plugin-key/ endpoint
+    """
+    request_url = furl()
+    request_url.set(scheme=request_base.scheme,
+                    host=request_base.host,
+                    port=request_base.port,
+                    path=PATH)
+    request_url.join(plugin_key + "-key")
+    response = requests.delete(request_url.url,
+                            auth=HTTPBasicAuth(request_base.user,
+                                               request_base.password))
+    if response.status_code == 204:
+        return True
+    return False

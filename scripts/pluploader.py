@@ -73,13 +73,16 @@ def main():
                             )
 
     infoparser = commandparser.add_parser("info")
-    infoparser.add_argument("plugin")
+    infoparser.add_argument("plugin", nargs='?', default=None)
 
     enable_parser = commandparser.add_parser("enable")
-    enable_parser.add_argument("plugin")
+    enable_parser.add_argument("plugin", nargs='?', default=None)
 
     disable_parser = commandparser.add_parser("disable")
-    disable_parser.add_argument("plugin")
+    disable_parser.add_argument("plugin", nargs='?', default=None)
+
+    uninstall_parser = commandparser.add_parser("uninstall")
+    uninstall_parser.add_argument("plugin", nargs='?', default=None)
 
     commandparser.add_parser("install")
 
@@ -94,6 +97,8 @@ def main():
         enable_plugin(args)
     elif(args.command == "disable"):
         disable_plugin(args)
+    elif(args.command == "uninstall"):
+        uninstall_plugin(args)
     elif(args.command == "info"):
         plugin_info(args)
     else:
@@ -116,31 +121,71 @@ def list_all(args):
 
 def plugin_info(args):
     """ Prints out all available information about a plugin """
+    plugin = args.plugin
+    if plugin is None:
+        plugin = pathutil.get_plugin_key_from_pom()
+    if plugin is None:
+        print("Could not find the plugin you want to get the info of.")
+        sys.exit(1)
     request_base = upm.RequestBase(scheme=args.scheme,
                                    host=args.host,
                                    port=args.port,
                                    user=args.user,
                                    password=args.password)
-    info = upm.get_plugin(request_base, args.plugin)
+    info = upm.get_plugin(request_base, plugin)
     info.print_table()
 
 def enable_plugin(args):
+    plugin = args.plugin
+    if plugin is None:
+        plugin = pathutil.get_plugin_key_from_pom()
+    if plugin is None:
+        print("Could not find the plugin you want to enable.")
+        sys.exit(1)
     request_base = upm.RequestBase(scheme=args.scheme,
                                    host=args.host,
                                    port=args.port,
                                    user=args.user,
                                    password=args.password)
-    response = upm.enable_disable_plugin(request_base, args.plugin, True)
+    response = upm.enable_disable_plugin(request_base, plugin, True)
     response.print_table()
 
 def disable_plugin(args):
+    plugin = args.plugin
+    if plugin is None:
+        plugin = pathutil.get_plugin_key_from_pom()
+    if plugin is None:
+        print("Could not find the plugin you want to disable.")
+        sys.exit(1)
     request_base = upm.RequestBase(scheme=args.scheme,
                                    host=args.host,
                                    port=args.port,
                                    user=args.user,
                                    password=args.password)
-    response = upm.enable_disable_plugin(request_base, args.plugin, False)
+    response = upm.enable_disable_plugin(request_base, plugin, False)
     response.print_table()
+
+def uninstall_plugin(args):
+    """ Uninstalls a plugin; If no plugin is given by the url, try to uninstall
+    the plugin of the current dir """
+    plugin = args.plugin
+    if plugin is None:
+        plugin = pathutil.get_plugin_key_from_pom()
+    if plugin is None:
+        print("Could not find the plugin you want to uninstall.")
+        sys.exit(1)
+    request_base = upm.RequestBase(scheme=args.scheme,
+                                   host=args.host,
+                                   port=args.port,
+                                   user=args.user,
+                                   password=args.password)
+    status = upm.uninstall_plugin(request_base, plugin)
+    if status:
+        print("Plugin successfully uninstalled")
+    else:
+        print("An error occurred. The plugin could not be uninstalled.")
+
+
 
 def install(args):
     """ Actual code of the pluploader
