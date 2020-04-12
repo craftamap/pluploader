@@ -45,7 +45,6 @@ class TqdmUpTo(tqdm):
 def main():
     """ Main method
     """
-    print(LOGO)
     project_root = pathutil.find_maven_project_root(".")
     config_locations = ["~/.pluprc"]
 
@@ -54,6 +53,15 @@ def main():
     p = configargparse.ArgParser(
         default_config_files=config_locations,
         config_file_parser_class=configargparse.YAMLConfigFileParser)
+    p.add("--host", default="localhost")
+    p.add("--scheme", default="http")
+    p.add("--user", required=True)
+    p.add("--password", required=True)
+    p.add("--port", default="8090")
+    p.add("-f", "--file", type=configargparse.FileType("rb"))
+    p.add("-i", "--interactive", default=False, action='store_true')
+    p.add("--no-logo",default=False, action="store_true")
+
     commandparser = p.add_subparsers(dest="command")
 
     listparser = commandparser.add_parser("list")
@@ -67,18 +75,25 @@ def main():
     infoparser = commandparser.add_parser("info")
     infoparser.add_argument("plugin")
 
+    enable_parser = commandparser.add_parser("enable")
+    enable_parser.add_argument("plugin")
+
+    disable_parser = commandparser.add_parser("disable")
+    disable_parser.add_argument("plugin")
+
     commandparser.add_parser("install")
 
-    p.add("--host", default="localhost")
-    p.add("--scheme", default="http")
-    p.add("--user", required=True)
-    p.add("--password", required=True)
-    p.add("--port", default="8090")
-    p.add("-i", "--interactive", default=False, action='store_true')
-    p.add("-f", "--file", type=configargparse.FileType("rb"))
     args = p.parse_args()
+
+    if(not args.no_logo):
+        print(LOGO)
+
     if(args.command == "list"):
         list_all(args)
+    elif(args.command == "enable"):
+        enable_plugin(args)
+    elif(args.command == "disable"):
+        disable_plugin(args)
     elif(args.command == "info"):
         plugin_info(args)
     else:
@@ -100,14 +115,32 @@ def list_all(args):
         print(plugin_infos)
 
 def plugin_info(args):
+    """ Prints out all available information about a plugin """
     request_base = upm.RequestBase(scheme=args.scheme,
                                    host=args.host,
                                    port=args.port,
                                    user=args.user,
                                    password=args.password)
     info = upm.get_plugin(request_base, args.plugin)
-    for key, value in info.__dict__.items():
-        print(f"{key:20}: {value}")
+    info.print_table()
+
+def enable_plugin(args):
+    request_base = upm.RequestBase(scheme=args.scheme,
+                                   host=args.host,
+                                   port=args.port,
+                                   user=args.user,
+                                   password=args.password)
+    response = upm.enable_disable_plugin(request_base, args.plugin, True)
+    response.print_table()
+
+def disable_plugin(args):
+    request_base = upm.RequestBase(scheme=args.scheme,
+                                   host=args.host,
+                                   port=args.port,
+                                   user=args.user,
+                                   password=args.password)
+    response = upm.enable_disable_plugin(request_base, args.plugin, False)
+    response.print_table()
 
 def install(args):
     """ Actual code of the pluploader

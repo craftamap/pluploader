@@ -35,6 +35,12 @@ class PluginDto:
     userInstalled: bool
     description: str
 
+    def print_table(self):
+        """Prints table view of plugin information
+        """
+        for key, value in self.__dict__.items():
+            print(f"{key:20}: {value}")
+
     @classmethod
     def from_dict(cls, env):
         """ creates PluginDto from a dict and ignores unknown keys
@@ -146,3 +152,30 @@ def get_plugin(request_base: RequestBase, plugin_key: str) -> 'PluginDto':
     return_obj = response.json(object_hook=PluginDto.decode)
     return return_obj
 
+
+def enable_disable_plugin(request_base: RequestBase, plugin_key: str,
+                          enabled: bool) -> 'PluginDto':
+    """ Enables/Disables Plugin"""
+    mod = {"enabled": enabled}
+    return _modify_plugin(request_base, plugin_key, mod)
+
+
+def _modify_plugin(request_base: RequestBase, plugin_key: str,
+                   modifications: dict) -> 'PluginDto':
+    """ Puts Changes to plugin by using the PATH/plugin-key/ endpoint and
+    returns new infos as a PluginDto
+    """
+    request_url = furl()
+    request_url.set(scheme=request_base.scheme,
+                    host=request_base.host,
+                    port=request_base.port,
+                    path=PATH)
+    request_url.join(plugin_key + "-key")
+    headers = {"Content-Type": "application/vnd.atl.plugins.plugin+json"}
+    response = requests.put(request_url.url,
+                            auth=HTTPBasicAuth(request_base.user,
+                                               request_base.password),
+                            json=modifications,
+                            headers=headers)
+    return_obj = response.json(object_hook=PluginDto.decode)
+    return return_obj
