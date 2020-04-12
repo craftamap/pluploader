@@ -11,19 +11,19 @@ from colorama import Fore
 from pluploader import pathutil
 from pluploader import upmapi as upm
 
-LOGO = f"""{Fore.YELLOW}
-SSSSssssss...   {Fore.RED}s{Fore.RESET}
-{Fore.YELLOW}SSSSSSSSSSSSSss{Fore.RED}sSs{Fore.RESET}
-{Fore.YELLOW}SSSSS°°°   °°SSS{Fore.RED}SS{Fore.RESET}
-{Fore.YELLOW}SSSS    {Fore.WHITE}..{Fore.YELLOW}    SSS{Fore.RED}S{Fore.RESET}
-{Fore.YELLOW}SSS    {Fore.WHITE}ssss{Fore.YELLOW}    SSS
-SSS     {Fore.WHITE}cc{Fore.YELLOW}     SSS
-SSS.    {Fore.WHITE}°°{Fore.YELLOW}    .SSS
- SSS          SSS
- SSSSs      sSSS
-{Fore.LIGHTGREEN_EX}sSS{Fore.YELLOW}SSSSSssSSS°
-{Fore.LIGHTGREEN_EX}  ssss{Fore.YELLOW}sssss{Fore.RESET}
-"""
+LOGO = f"""
+{Fore.YELLOW} ))))          {Fore.RED}           ((((
+{Fore.YELLOW} )))))))       {Fore.RED}        (((((((
+{Fore.YELLOW}  ))))))))     {Fore.RED}      ((((((((
+{Fore.YELLOW}  ))))))))))   {Fore.RED}    ((((((((((
+{Fore.YELLOW}   ))))))))))) {Fore.RED}  (((((((((((
+{Fore.YELLOW}    ))))))))))){Fore.GREEN}|{Fore.RED}(((((((((((
+{Fore.YELLOW}     ))))))))){Fore.GREEN}|||{Fore.RED}(((((((((
+{Fore.YELLOW}      ))))))){Fore.GREEN}|||||{Fore.RED}(((((((
+{Fore.YELLOW}        )))){Fore.GREEN}|||||||{Fore.RED}((((
+{Fore.YELLOW}          )){Fore.GREEN}|||||||{Fore.RED}((
+{Fore.YELLOW}            {Fore.RED}({Fore.GREEN}|||||{Fore.YELLOW})
+{Fore.RESET}"""
 
 
 class TqdmUpTo(tqdm):
