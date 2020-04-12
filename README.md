@@ -13,7 +13,7 @@ There are two ways to install this repository:
 As we are not on PyPi (yet), you can currently install with this command:
 
 ```
-pip3 install https://github.com/livelyapps/pluploader.git --user
+pip3 install git+https://github.com/livelyapps/pluploader.git --user
 ```
 
 ### manual
