@@ -22,7 +22,7 @@ LOGO = f"""
 {Fore.YELLOW}      ))))))){Fore.GREEN}|||||{Fore.RED}(((((((
 {Fore.YELLOW}        )))){Fore.GREEN}|||||||{Fore.RED}((((
 {Fore.YELLOW}          )){Fore.GREEN}|||||||{Fore.RED}((
-{Fore.YELLOW}            {Fore.RED}({Fore.GREEN}|||||{Fore.YELLOW})
+{Fore.YELLOW}            {Fore.RED}/{Fore.GREEN}|||||{Fore.YELLOW}\\
 {Fore.RESET}"""
 
 
