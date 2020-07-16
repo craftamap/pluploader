@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pluploader",
-    version="0.2.0",
+    version="0.2.1",
     author="Fabian Siegel, Lively Apps GmbH",
     author_email="fabian@livelyapps.com",
     description="CLI Confluence/Jira Plugin uploader",
@@ -23,6 +23,7 @@ setuptools.setup(
         "configargparse",
         "furl",
         "PyYAML",
-        "packaging"
+        "packaging",
+        "coloredlogs"
     ]
 )

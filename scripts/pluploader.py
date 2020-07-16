@@ -8,6 +8,7 @@ import configargparse
 import logging
 from tqdm import tqdm
 from colorama import Fore
+import coloredlogs
 
 from pluploader import pathutil
 from pluploader import upmapi as upm
@@ -26,6 +27,8 @@ LOGO = f"""
 {Fore.YELLOW}            {Fore.RED}/{Fore.GREEN}|||||{Fore.YELLOW}\\
 {Fore.RESET}"""
 
+coloredlogs.install(level='DEBUG')
+coloredlogs.install(fmt='%(asctime)s %(levelname)s %(message)s')
 
 class TqdmUpTo(tqdm):
     """Provides `update_to(n)` which uses `tqdm.update(delta_n)`."""
@@ -126,7 +129,7 @@ def plugin_info(args):
     if plugin is None:
         plugin = pathutil.get_plugin_key_from_pom()
     if plugin is None:
-        print("Could not find the plugin you want to get the info of.")
+        logging.error("Could not find the plugin you want to get the info of.")
         sys.exit(1)
     request_base = upm.RequestBase(scheme=args.scheme,
                                    host=args.host,
@@ -141,7 +144,7 @@ def enable_plugin(args):
     if plugin is None:
         plugin = pathutil.get_plugin_key_from_pom()
     if plugin is None:
-        print("Could not find the plugin you want to enable.")
+        logging.error("Could not find the plugin you want to enable.")
         sys.exit(1)
     request_base = upm.RequestBase(scheme=args.scheme,
                                    host=args.host,
@@ -156,7 +159,7 @@ def disable_plugin(args):
     if plugin is None:
         plugin = pathutil.get_plugin_key_from_pom()
     if plugin is None:
-        print("Could not find the plugin you want to disable.")
+        logging.error("Could not find the plugin you want to disable.")
         sys.exit(1)
     request_base = upm.RequestBase(scheme=args.scheme,
                                    host=args.host,
@@ -173,7 +176,7 @@ def uninstall_plugin(args):
     if plugin is None:
         plugin = pathutil.get_plugin_key_from_pom()
     if plugin is None:
-        print("Could not find the plugin you want to uninstall.")
+        logging.error("Could not find the plugin you want to uninstall.")
         sys.exit(1)
     request_base = upm.RequestBase(scheme=args.scheme,
                                    host=args.host,
@@ -182,9 +185,9 @@ def uninstall_plugin(args):
                                    password=args.password)
     status = upm.uninstall_plugin(request_base, plugin)
     if status:
-        print("Plugin successfully uninstalled")
+        logging.info("Plugin successfully uninstalled")
     else:
-        print("An error occurred. The plugin could not be uninstalled.")
+        logging.error("An error occurred. The plugin could not be uninstalled.")
 
 
 
@@ -205,13 +208,12 @@ def install(args):
                     raise FileNotFoundError()
                 files.update({'plugin': plugin})
             except FileNotFoundError:
-               print("Could not find the plugin you want to install.")
-               print("Are you in a maven directory?")
+               logging.error("Could not find the plugin you want to install. Are you in a maven directory?")
                sys.exit(1)
         else:
             files.update({'plugin': args.file})
 
-        print(f"{os.path.basename(files.get('plugin').name)} will be uploaded \
+        logging.info(f"{os.path.basename(files.get('plugin').name)} will be uploaded \
 to {request_base.host}:{request_base.port}")
         if args.interactive:
             confirm = input(
@@ -229,7 +231,7 @@ to {request_base.host}:{request_base.port}")
                     request_base, previous_request)
                 pbar.update_to(progress)
                 time.sleep(0.1)
-        print("plugin uploaded and " +
+        logging.info("plugin uploaded and " +
               ("enabled" if previous_request["enabled"] else "disabled") + "!")
     except Exception as e:
         raise e
