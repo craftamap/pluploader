@@ -22,6 +22,7 @@ setuptools.setup(
         "colorama",
         "configargparse",
         "furl",
-        "PyYAML"
+        "PyYAML",
+        "packaging"
     ]
 )

@@ -4,3 +4,4 @@ colorama
 configargparse
 furl
 PyYAML
+packaging
