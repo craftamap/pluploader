@@ -5,6 +5,7 @@ import time
 import sys
 import os.path
 import configargparse
+import logging
 from tqdm import tqdm
 from colorama import Fore
 
@@ -198,11 +199,15 @@ def install(args):
     try:
         files = {}
         if args.file is None:
-            plugin = pathutil.get_jar_from_pom()
-            if plugin is None:
-                print("File not found!")
-                sys.exit(1)
-            files.update({'plugin': plugin})
+            try:
+                plugin = pathutil.get_jar_from_pom()
+                if plugin is None:
+                    raise FileNotFoundError()
+                files.update({'plugin': plugin})
+            except FileNotFoundError:
+               print("Could not find the plugin you want to install.")
+               print("Are you in a maven directory?")
+               sys.exit(1)
         else:
             files.update({'plugin': args.file})
 
