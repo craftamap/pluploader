@@ -1,16 +1,44 @@
 """ This module provides a basic interface for the upm rest api
 """
 
-import typing
 import dataclasses
-import json
 import inspect
-from furl import furl
+import json
+import typing
+
 import requests
-from requests.auth import HTTPBasicAuth
+from colorama import Fore
+from furl import furl
 from packaging import version
 
 UPM_API_ENDPOINT: str = "/rest/plugins/1.0/"
+
+
+@dataclasses.dataclass()
+class ModuleDto:
+    completeKey: str
+    key: typing.Optional[str]
+    name: str
+    enabled: bool
+    optional: bool
+    recognisableType: bool
+    broken: bool
+
+    @classmethod
+    def from_dict(cls, env):
+        """ creates PluginDto from a dict and ignores unknown keys
+        """
+        parameters = {
+            k: v
+            for k, v in env.items() if k in inspect.signature(cls).parameters
+        }
+        if "name" not in parameters:
+            parameters["name"] = ""
+        return cls(**parameters)
+
+    @staticmethod
+    def decode(obj: dict) -> typing.Union['ModuleDto', dict]:
+        return ModuleDto.from_dict(obj)
 
 
 @dataclasses.dataclass
@@ -23,21 +51,34 @@ class PluginDto:
     enabled: bool
     userInstalled: bool
     description: str
+    modules: typing.Optional[typing.List[ModuleDto]]
 
-    def print_table(self):
+    def print_table(self, print_modules: bool):
         """Prints table view of plugin information
         """
         for key, value in self.__dict__.items():
-            print(f"{key:20}: {value}")
+            if key == "modules":
+                if print_modules:
+                    print(f"{key:20}:")
+                    for module in value:
+                        status = f"{Fore.GREEN}✓{Fore.RESET}" if module.enabled else f"{Fore.YELLOW}!{Fore.RESET}"
+                        print(f"  - {status} {module.name:20} {module.key}")
+                else:
+                    pass
+            else:
+                print(f"{key:20}: {value}")
 
     @classmethod
     def from_dict(cls, env):
         """ creates PluginDto from a dict and ignores unknown keys
         """
-        return cls(**{
+        parameter = {
             k: v
             for k, v in env.items() if k in inspect.signature(cls).parameters
-        })
+        }
+        if "modules" in parameter and parameter["modules"] != []:
+            parameter["modules"] = [ModuleDto.decode(x) for x in parameter["modules"]]
+        return cls(**parameter)
 
     @staticmethod
     def decode(obj: dict) -> typing.Union['PluginDto', dict]:
@@ -47,6 +88,8 @@ class PluginDto:
                 and "enabled" in obj \
                 and "userInstalled" in obj \
                 and "description" in obj:
+            if "modules" not in obj:
+                obj["modules"] = []
             return PluginDto.from_dict(obj)
         return obj
 
@@ -143,3 +186,16 @@ def uninstall_plugin(base_url: furl, plugin_key: str) -> bool:
     if response.status_code == 204:
         return True
     return False
+
+def module_status(previous_request: dict):
+    pluginDto = PluginDto.decode(previous_request)
+    all_modules = 0
+    enabled_modules = 0
+    disabled_modules= []
+    for module in pluginDto.modules:
+        all_modules+=1
+        if module.enabled:
+            enabled_modules+=1
+        else:
+            disabled_modules.append(module)
+    return all_modules, enabled_modules, disabled_modules

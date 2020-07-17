@@ -84,6 +84,7 @@ def main():
 
     infoparser = commandparser.add_parser("info")
     infoparser.add_argument("plugin", nargs='?', default=None)
+    infoparser.add_argument("--show-modules", default=False, action="store_true")
 
     enable_parser = commandparser.add_parser("enable")
     enable_parser.add_argument("plugin", nargs='?', default=None)
@@ -154,7 +155,7 @@ def plugin_info(base_url, args):
         logging.error("Could not find the plugin you want to get the info of.")
         sys.exit(1)
     info = upm.get_plugin(base_url, plugin)
-    info.print_table()
+    info.print_table(args.show_modules)
 
 
 def enable_plugin(base_url, args):
@@ -165,7 +166,7 @@ def enable_plugin(base_url, args):
         logging.error("Could not find the plugin you want to enable.")
         sys.exit(1)
     response = upm.enable_disable_plugin(base_url, plugin, True)
-    response.print_table()
+    response.print_table(False)
 
 
 def disable_plugin(base_url, args):
@@ -176,7 +177,7 @@ def disable_plugin(base_url, args):
         logging.error("Could not find the plugin you want to disable.")
         sys.exit(1)
     response = upm.enable_disable_plugin(base_url, plugin, False)
-    response.print_table()
+    response.print_table(False)
 
 
 def uninstall_plugin(base_url, args):
@@ -232,8 +233,13 @@ def install(base_url, args):
                 )
                 pbar.update_to(progress)
                 time.sleep(0.1)
-        logging.info("plugin uploaded and " +
-                     ("enabled" if previous_request["enabled"] else "disabled") + "!")
+        status = f"{Fore.GREEN}enabled{Fore.RESET}!" if previous_request["enabled"] else f"{Fore.RED}disabled{Fore.RESET}! \n" \
+                                                                                         f"Check your logs!"
+        all, enabled, disabled = upm.module_status(previous_request)
+        logging.info("plugin uploaded and " + status + f" ({enabled} of {all} modules enabled)")
+        if len(disabled) != 0:
+            for module in disabled:
+                logging.info(f"   - {module.key} is disabled")
     except Exception as e:
         raise e
 
