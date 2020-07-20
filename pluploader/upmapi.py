@@ -24,21 +24,19 @@ class ModuleDto:
     recognisableType: bool
     broken: bool
 
-    @classmethod
-    def from_dict(cls, env):
-        """ creates PluginDto from a dict and ignores unknown keys
-        """
-        parameters = {
-            k: v
-            for k, v in env.items() if k in inspect.signature(cls).parameters
-        }
-        if "name" not in parameters:
-            parameters["name"] = ""
-        return cls(**parameters)
-
     @staticmethod
     def decode(obj: dict) -> typing.Union['ModuleDto', dict]:
-        return ModuleDto.from_dict(obj)
+        if "key" in obj:
+            return ModuleDto(
+                key=obj.get("key"),
+                completeKey=obj.get("completeKey", ""),
+                name=obj.get("name", ""),
+                enabled=obj.get("enabled", False),
+                optional=obj.get("optional", False),
+                recognisableType=obj.get("recognisableType", False),
+                broken=obj.get("broken", True)
+            )
+        return obj
 
 
 @dataclasses.dataclass
@@ -68,29 +66,20 @@ class PluginDto:
             else:
                 print(f"{key:20}: {value}")
 
-    @classmethod
-    def from_dict(cls, env):
-        """ creates PluginDto from a dict and ignores unknown keys
-        """
-        parameter = {
-            k: v
-            for k, v in env.items() if k in inspect.signature(cls).parameters
-        }
-        if "modules" in parameter and parameter["modules"] != []:
-            parameter["modules"] = [ModuleDto.decode(x) for x in parameter["modules"]]
-        return cls(**parameter)
-
     @staticmethod
     def decode(obj: dict) -> typing.Union['PluginDto', dict]:
-        if "name" in obj \
-                and "key" in obj \
-                and "version" in obj \
-                and "enabled" in obj \
-                and "userInstalled" in obj \
-                and "description" in obj:
-            if "modules" not in obj:
-                obj["modules"] = []
-            return PluginDto.from_dict(obj)
+        if "key" in obj:
+            return PluginDto(
+                key=obj.get("key"),
+                name=obj.get("name", ""),
+                version=obj.get("version", "0.0.1"),
+                userInstalled=obj.get("userInstalled", False),
+                enabled=obj.get("enabled", False),
+                description=obj.get("description", ""),
+                modules=[
+                    ModuleDto.decode(x) for x in obj.get("modules", [])
+                ]
+            )
         return obj
 
 
@@ -137,7 +126,7 @@ def get_all_plugins(base_url: furl, user_installed: bool = True) -> typing.List[
     request_url = base_url.copy()
     request_url.add(path=UPM_API_ENDPOINT)
     response = requests.get(request_url.url)
-    return_obj = response.json(object_hook=PluginDto.decode)["plugins"]
+    return_obj = [PluginDto.decode(x) for x in response.json().get("plugins", [])]
     if user_installed:
         return_obj = filter(lambda x: x.userInstalled, return_obj)
     return return_obj
@@ -151,7 +140,7 @@ def get_plugin(base_url: furl, plugin_key: str) -> 'PluginDto':
     request_url.add(path=UPM_API_ENDPOINT)
     request_url.join(plugin_key + "-key")
     response = requests.get(request_url.url)
-    return_obj = response.json(object_hook=PluginDto.decode)
+    return_obj = PluginDto.decode(response.json())
     return return_obj
 
 
@@ -172,7 +161,7 @@ def _modify_plugin(base_url: furl, plugin_key: str, modifications: dict) -> 'Plu
     response = requests.put(request_url.url,
                             json=modifications,
                             headers=headers)
-    return_obj = response.json(object_hook=PluginDto.decode)
+    return_obj = PluginDto.decode(response.json())
     return return_obj
 
 
@@ -187,15 +176,22 @@ def uninstall_plugin(base_url: furl, plugin_key: str) -> bool:
         return True
     return False
 
-def module_status(previous_request: dict):
-    pluginDto = PluginDto.decode(previous_request)
+
+def module_status(previous_request: dict) -> typing.Tuple[int, int, typing.List['ModuleDto']]:
+    """ Returns the module status of an plugin based on a request/dict containing an PluginDto
+    returns an tuple containing
+        1. number of all plugins
+        2. number of enabled plugins
+        3. Array of disabled plugins
+    """
+    plugin_dto = PluginDto.decode(previous_request)
     all_modules = 0
     enabled_modules = 0
-    disabled_modules= []
-    for module in pluginDto.modules:
-        all_modules+=1
+    disabled_modules = []
+    for module in plugin_dto.modules:
+        all_modules += 1
         if module.enabled:
-            enabled_modules+=1
+            enabled_modules += 1
         else:
             disabled_modules.append(module)
     return all_modules, enabled_modules, disabled_modules
