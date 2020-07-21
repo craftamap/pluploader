@@ -233,11 +233,12 @@ def install(base_url, args):
                 )
                 pbar.update_to(progress)
                 time.sleep(0.1)
-        status = f"{Fore.GREEN}enabled{Fore.RESET}!" if previous_request["enabled"] else f"{Fore.RED}disabled{Fore.RESET}! \n" \
-                                                                                         f"You should check the logs " \
-                                                                                         f"of your Atlassian host to " \
-                                                                                         f"find out why your plugin " \
-                                                                                         f"was disabled. "
+        status = f"{Fore.GREEN}enabled{Fore.RESET}!" if previous_request[
+            "enabled"] else f"{Fore.RED}disabled{Fore.RESET}! \n" \
+                            f"You should check the logs " \
+                            f"of your Atlassian host to " \
+                            f"find out why your plugin " \
+                            f"was disabled. "
         all, enabled, disabled = upm.module_status(previous_request)
         logging.info("plugin uploaded and " + status + f" ({enabled} of {all} modules enabled)")
         if len(disabled) != 0:

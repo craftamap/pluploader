@@ -57,14 +57,14 @@ class PluginDto:
         for key, value in self.__dict__.items():
             if key == "modules":
                 if print_modules:
-                    print(f"{key:20}:")
+                    print(f"{(key+':'):20}")
                     for module in value:
                         status = f"{Fore.GREEN}✓{Fore.RESET}" if module.enabled else f"{Fore.YELLOW}!{Fore.RESET}"
-                        print(f"  - {status} {module.name:20} {module.key}")
+                        print(f"  {status} {module.name[:20]:20} {module.key}")
                 else:
                     pass
             else:
-                print(f"{key:20}: {value}")
+                print(f"{(key + ':'):15} {value}")
 
     @staticmethod
     def decode(obj: dict) -> typing.Union['PluginDto', dict]:
