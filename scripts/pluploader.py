@@ -6,6 +6,8 @@ import sys
 import os.path
 import configargparse
 import logging
+
+from furl import furl
 from tqdm import tqdm
 from colorama import Fore
 import coloredlogs
@@ -30,8 +32,10 @@ LOGO = f"""
 coloredlogs.install(level='DEBUG')
 coloredlogs.install(fmt='%(asctime)s %(levelname)s %(message)s')
 
+
 class TqdmUpTo(tqdm):
     """Provides `update_to(n)` which uses `tqdm.update(delta_n)`."""
+
     def update_to(self, b=1, bsize=1, tsize=None):
         """
         b  : int, optional
@@ -57,14 +61,16 @@ def main():
     p = configargparse.ArgParser(
         default_config_files=config_locations,
         config_file_parser_class=configargparse.YAMLConfigFileParser)
-    p.add("--host", default="localhost")
-    p.add("--scheme", default="http")
+    p.add("--base-url", default="http://localhost:8090")
     p.add("--user", required=True)
     p.add("--password", required=True)
+    p.add("--scheme", default="http")
+    p.add("--host", default="localhost")
+    p.add("--path", default="/")
     p.add("--port", default="8090")
     p.add("-f", "--file", type=configargparse.FileType("rb"))
     p.add("-i", "--interactive", default=False, action='store_true')
-    p.add("--no-logo",default=False, action="store_true")
+    p.add("--no-logo", default=False, action="store_true")
 
     commandparser = p.add_subparsers(dest="command")
 
@@ -91,39 +97,55 @@ def main():
     commandparser.add_parser("install")
 
     args = p.parse_args()
+    all_defaults = {key: p.get_default(key) for key in vars(args)}
 
-    if(not args.no_logo):
+    base_url: furl = base_url_from_args(args, all_defaults)
+
+    if (not args.no_logo):
         print(LOGO)
-
-    if(args.command == "list"):
-        list_all(args)
-    elif(args.command == "enable"):
-        enable_plugin(args)
-    elif(args.command == "disable"):
-        disable_plugin(args)
-    elif(args.command == "uninstall"):
-        uninstall_plugin(args)
-    elif(args.command == "info"):
-        plugin_info(args)
+    if (args.command == "list"):
+        list_all(base_url, args)
+    elif (args.command == "enable"):
+        enable_plugin(base_url, args)
+    elif (args.command == "disable"):
+        disable_plugin(base_url, args)
+    elif (args.command == "uninstall"):
+        uninstall_plugin(base_url, args)
+    elif (args.command == "info"):
+        plugin_info(base_url, args)
     else:
-        install(args)
+        install(base_url, args)
 
-def list_all(args):
+
+def base_url_from_args(args, defaults) -> furl:
+    base_url: furl = furl(args.base_url)
+    if args.scheme != defaults["scheme"]:
+        base_url.scheme = args.scheme
+    if args.host != defaults["host"]:
+        base_url.host = args.host
+    if args.port != defaults["port"]:
+        base_url.port = args.port
+    if args.path != defaults["path"]:
+        base_url.path = args.path
+
+    base_url.username = args.user
+    base_url.password = args.password
+
+    return base_url
+
+
+def list_all(base_url, args):
     """ Prints out basic plugin informations of all plugins"""
-    request_base = upm.RequestBase(scheme=args.scheme,
-                                   host=args.host,
-                                   port=args.port,
-                                   user=args.user,
-                                   password=args.password)
-    all_plugins = upm.get_all_plugins(request_base, not args.print_all)
+    all_plugins = upm.get_all_plugins(base_url, not args.print_all)
     print(f"  {'Name':25} {'Version':13} {'Plugin Key':50}")
     for plugin in all_plugins:
         status = f"{Fore.GREEN}✓{Fore.RESET}" if plugin.enabled else f"{Fore.YELLOW}!{Fore.RESET}"
-        plugin_infos = f"{status} {plugin.name[:25]:25}"\
-            +f" {str(plugin.version)[:13]:13} ({plugin.key})"
+        plugin_infos = f"{status} {plugin.name[:25]:25}" \
+                       + f" {str(plugin.version)[:13]:13} ({plugin.key})"
         print(plugin_infos)
 
-def plugin_info(args):
+
+def plugin_info(base_url, args):
     """ Prints out all available information about a plugin """
     plugin = args.plugin
     if plugin is None:
@@ -131,45 +153,33 @@ def plugin_info(args):
     if plugin is None:
         logging.error("Could not find the plugin you want to get the info of.")
         sys.exit(1)
-    request_base = upm.RequestBase(scheme=args.scheme,
-                                   host=args.host,
-                                   port=args.port,
-                                   user=args.user,
-                                   password=args.password)
-    info = upm.get_plugin(request_base, plugin)
+    info = upm.get_plugin(base_url, plugin)
     info.print_table()
 
-def enable_plugin(args):
+
+def enable_plugin(base_url, args):
     plugin = args.plugin
     if plugin is None:
         plugin = pathutil.get_plugin_key_from_pom()
     if plugin is None:
         logging.error("Could not find the plugin you want to enable.")
         sys.exit(1)
-    request_base = upm.RequestBase(scheme=args.scheme,
-                                   host=args.host,
-                                   port=args.port,
-                                   user=args.user,
-                                   password=args.password)
-    response = upm.enable_disable_plugin(request_base, plugin, True)
+    response = upm.enable_disable_plugin(base_url, plugin, True)
     response.print_table()
 
-def disable_plugin(args):
+
+def disable_plugin(base_url, args):
     plugin = args.plugin
     if plugin is None:
         plugin = pathutil.get_plugin_key_from_pom()
     if plugin is None:
         logging.error("Could not find the plugin you want to disable.")
         sys.exit(1)
-    request_base = upm.RequestBase(scheme=args.scheme,
-                                   host=args.host,
-                                   port=args.port,
-                                   user=args.user,
-                                   password=args.password)
-    response = upm.enable_disable_plugin(request_base, plugin, False)
+    response = upm.enable_disable_plugin(base_url, plugin, False)
     response.print_table()
 
-def uninstall_plugin(args):
+
+def uninstall_plugin(base_url, args):
     """ Uninstalls a plugin; If no plugin is given by the url, try to uninstall
     the plugin of the current dir """
     plugin = args.plugin
@@ -178,27 +188,16 @@ def uninstall_plugin(args):
     if plugin is None:
         logging.error("Could not find the plugin you want to uninstall.")
         sys.exit(1)
-    request_base = upm.RequestBase(scheme=args.scheme,
-                                   host=args.host,
-                                   port=args.port,
-                                   user=args.user,
-                                   password=args.password)
-    status = upm.uninstall_plugin(request_base, plugin)
+    status = upm.uninstall_plugin(base_url, plugin)
     if status:
         logging.info("Plugin successfully uninstalled")
     else:
         logging.error("An error occurred. The plugin could not be uninstalled.")
 
 
-
-def install(args):
+def install(base_url, args):
     """ Actual code of the pluploader
     """
-    request_base = upm.RequestBase(scheme=args.scheme,
-                                   host=args.host,
-                                   port=args.port,
-                                   user=args.user,
-                                   password=args.password)
     try:
         files = {}
         if args.file is None:
@@ -208,31 +207,33 @@ def install(args):
                     raise FileNotFoundError()
                 files.update({'plugin': plugin})
             except FileNotFoundError:
-               logging.error("Could not find the plugin you want to install. Are you in a maven directory?")
-               sys.exit(1)
+                logging.error("Could not find the plugin you want to install. Are you in a maven directory?")
+                sys.exit(1)
         else:
             files.update({'plugin': args.file})
 
-        logging.info(f"{os.path.basename(files.get('plugin').name)} will be uploaded \
-to {request_base.host}:{request_base.port}")
+        logging.info(f"{os.path.basename(files.get('plugin').name)} will be uploaded"
+                     f" to {base_url.host}:{base_url.port}")
         if args.interactive:
             confirm = input(
                 "Do you really want to upload and install the plugin? (y/N) ")
             if confirm.lower() != "y":
                 sys.exit()
 
-        token = upm.get_token(request_base)
+        token = upm.get_token(base_url)
         with TqdmUpTo(total=100) as pbar:
             pbar.update_to(0)
             progress, previous_request = upm.upload_plugin(
-                request_base, files, token)
+                base_url, files, token
+            )
             while progress != 100:
                 progress, previous_request = upm.get_current_progress(
-                    request_base, previous_request)
+                    base_url, previous_request
+                )
                 pbar.update_to(progress)
                 time.sleep(0.1)
         logging.info("plugin uploaded and " +
-              ("enabled" if previous_request["enabled"] else "disabled") + "!")
+                     ("enabled" if previous_request["enabled"] else "disabled") + "!")
     except Exception as e:
         raise e
 
