@@ -1,11 +1,19 @@
 import setuptools
+import subprocess
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+try:
+    label = subprocess.check_output(["git", "describe", "--always", "--tags"]).strip()
+except Exception:
+    label = "UNKNOWN"
+
+
 setuptools.setup(
     name="pluploader",
-    version="0.3.0",
+    version=label.decode("utf-8"),
+    python_requires='>=3.6',
     author="Fabian Siegel, Lively Apps GmbH",
     author_email="fabian@livelyapps.com",
     description="CLI Confluence/Jira Plugin uploader",
