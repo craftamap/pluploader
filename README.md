@@ -1,5 +1,7 @@
 ## pluploader
 
+[![PyPI version](https://badge.fury.io/py/pluploader.svg)](https://badge.fury.io/py/pluploader)
+
 A simple command line plugin uploader/installer/manager for atlassian product 
 server instances (Confluence/Jira) written in python(3).
 
@@ -11,13 +13,9 @@ There are two ways to install this repository:
 
 ### pip 
 
-As we are not on PyPi (yet), you can currently install with this command:
-
 ```
-pip3 install git+https://github.com/livelyapps/pluploader.git
+pip3 install pluploader
 ```
-
-Make sure your python scripts are in your path.
 
 ### manual
 
