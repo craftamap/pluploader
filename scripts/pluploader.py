@@ -62,16 +62,16 @@ def main():
     p = configargparse.ArgParser(
         default_config_files=config_locations,
         config_file_parser_class=configargparse.YAMLConfigFileParser)
-    p.add("--base-url", default="http://localhost:8090")
-    p.add("--user", default="admin")
-    p.add("--password", default="admin")
-    p.add("--scheme", default="http")
-    p.add("--host", default="localhost")
-    p.add("--path", default="/")
-    p.add("--port", default="8090")
-    p.add("-f", "--file", type=configargparse.FileType("rb"))
-    p.add("-i", "--interactive", default=False, action='store_true')
-    p.add("--no-logo", default=False, action="store_true")
+    p.add_argument("--base-url", default="http://localhost:8090")
+    p.add_argument("--user", default="admin")
+    p.add_argument("--password", default="admin")
+    p.add_argument("--scheme", default="http")
+    p.add_argument("--host", default="localhost")
+    p.add_argument("--path", default="/")
+    p.add_argument("--port", default="8090")
+    p.add_argument("-f", "--file", type=configargparse.FileType("rb"))
+    p.add_argument("-i", "--interactive", default=False, action='store_true')
+    p.add_argument("--no-logo", default=False, action="store_true")
 
     commandparser = p.add_subparsers(dest="command")
 
@@ -103,17 +103,17 @@ def main():
 
     base_url: furl = base_url_from_args(args, all_defaults)
 
-    if (not args.no_logo):
+    if not args.no_logo:
         print(LOGO)
-    if (args.command == "list"):
+    if args.command == "list":
         list_all(base_url, args)
-    elif (args.command == "enable"):
+    elif args.command == "enable":
         enable_plugin(base_url, args)
-    elif (args.command == "disable"):
+    elif args.command == "disable":
         disable_plugin(base_url, args)
-    elif (args.command == "uninstall"):
+    elif args.command == "uninstall":
         uninstall_plugin(base_url, args)
-    elif (args.command == "info"):
+    elif args.command == "info":
         plugin_info(base_url, args)
     else:
         install(base_url, args)
