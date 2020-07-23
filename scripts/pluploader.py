@@ -7,6 +7,7 @@ import os.path
 import configargparse
 import logging
 
+import requests
 from furl import furl
 from tqdm import tqdm
 from colorama import Fore
@@ -137,7 +138,15 @@ def base_url_from_args(args, defaults) -> furl:
 
 def list_all(base_url, args):
     """ Prints out basic plugin informations of all plugins"""
-    all_plugins = upm.get_all_plugins(base_url, not args.print_all)
+    try:
+        all_plugins = upm.get_all_plugins(base_url, not args.print_all)
+    except requests.exceptions.ConnectionError:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except Exception as e:
+        logging.error(f"An error occured - check your credentials")
+        logging.error(f"{e}")
+        sys.exit(1)
     print(f"  {'Name':25} {'Version':13} {'Plugin Key':50}")
     for plugin in all_plugins:
         status = f"{Fore.GREEN}✓{Fore.RESET}" if plugin.enabled else f"{Fore.YELLOW}!{Fore.RESET}"
@@ -154,7 +163,15 @@ def plugin_info(base_url, args):
     if plugin is None:
         logging.error("Could not find the plugin you want to get the info of.")
         sys.exit(1)
-    info = upm.get_plugin(base_url, plugin)
+    try:
+        info = upm.get_plugin(base_url, plugin)
+    except requests.exceptions.ConnectionError:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except Exception as e:
+        logging.error(f"An error occured - check your credentials")
+        logging.error(f"{e}")
+        sys.exit(1)
     info.print_table(args.show_modules)
 
 
@@ -165,7 +182,15 @@ def enable_plugin(base_url, args):
     if plugin is None:
         logging.error("Could not find the plugin you want to enable.")
         sys.exit(1)
-    response = upm.enable_disable_plugin(base_url, plugin, True)
+    try:
+        response = upm.enable_disable_plugin(base_url, plugin, True)
+    except requests.exceptions.ConnectionError:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except Exception as e:
+        logging.error(f"An error occured - check your credentials")
+        logging.error(f"{e}")
+        sys.exit(1)
     response.print_table(False)
 
 
@@ -176,7 +201,15 @@ def disable_plugin(base_url, args):
     if plugin is None:
         logging.error("Could not find the plugin you want to disable.")
         sys.exit(1)
-    response = upm.enable_disable_plugin(base_url, plugin, False)
+    try:
+        response = upm.enable_disable_plugin(base_url, plugin, False)
+    except requests.exceptions.ConnectionError:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except Exception as e:
+        logging.error(f"An error occured - check your credentials")
+        logging.error(f"{e}")
+        sys.exit(1)
     response.print_table(False)
 
 
@@ -189,7 +222,15 @@ def uninstall_plugin(base_url, args):
     if plugin is None:
         logging.error("Could not find the plugin you want to uninstall.")
         sys.exit(1)
-    status = upm.uninstall_plugin(base_url, plugin)
+    try:
+        status = upm.uninstall_plugin(base_url, plugin)
+    except requests.exceptions.ConnectionError:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except Exception as e:
+        logging.error(f"An error occured - check your credentials")
+        logging.error(f"{e}")
+        sys.exit(1)
     if status:
         logging.info("Plugin successfully uninstalled")
     else:
@@ -220,8 +261,15 @@ def install(base_url, args):
                 "Do you really want to upload and install the plugin? (y/N) ")
             if confirm.lower() != "y":
                 sys.exit()
+        try:
+            token = upm.get_token(base_url)
+        except requests.exceptions.ConnectionError:
+            logging.error("Could not connect to host - check your base-url")
+            sys.exit(1)
+        except KeyError:
+            logging.error("UPM Token couldn't be retrieved; are your credentials correct?")
+            sys.exit(1)
 
-        token = upm.get_token(base_url)
         with TqdmUpTo(total=100) as pbar:
             pbar.update_to(0)
             progress, previous_request = upm.upload_plugin(
@@ -245,8 +293,8 @@ def install(base_url, args):
             for module in disabled:
                 logging.info(f"   - {module.key} is disabled")
     except Exception as e:
-        raise e
-
+        logging.error("An error occured while uploading plugin")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
