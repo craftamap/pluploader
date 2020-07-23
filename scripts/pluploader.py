@@ -62,8 +62,8 @@ def main():
         default_config_files=config_locations,
         config_file_parser_class=configargparse.YAMLConfigFileParser)
     p.add("--base-url", default="http://localhost:8090")
-    p.add("--user", required=True)
-    p.add("--password", required=True)
+    p.add("--user", default="admin")
+    p.add("--password", default="admin")
     p.add("--scheme", default="http")
     p.add("--host", default="localhost")
     p.add("--path", default="/")
