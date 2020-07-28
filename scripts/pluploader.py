@@ -15,6 +15,7 @@ import coloredlogs
 
 from pluploader import pathutil
 from pluploader import upmapi as upm
+import pluploader
 
 LOGO = f"""
 {Fore.YELLOW} ))))          {Fore.RED}           ((((
@@ -72,6 +73,7 @@ def main():
     p.add_argument("-f", "--file", type=configargparse.FileType("rb"))
     p.add_argument("-i", "--interactive", default=False, action='store_true')
     p.add_argument("--no-logo", default=False, action="store_true")
+    p.add_argument("--version", default=False, action="store_true")
 
     commandparser = p.add_subparsers(dest="command")
 
@@ -105,6 +107,11 @@ def main():
 
     if not args.no_logo:
         print(LOGO)
+
+    if args.version:
+        print(pluploader.__version__)
+        sys.exit(0)
+
     if args.command == "list":
         list_all(base_url, args)
     elif args.command == "enable":
