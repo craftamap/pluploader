@@ -348,7 +348,7 @@ def safemode_disable(base_url, args):
             logging.info(
                 f"Safe-mode is now {Fore.GREEN}disabled{Fore.RESET}, all plugins {'got restored' if not args.keep_state else 'stayed disabled'}.")
         else:
-            logging.error(f"Could not enable safe-mode - is safe-mode already disabled?")
+            logging.error(f"Could not disable safe-mode - is safe-mode already disabled?")
     except requests.exceptions.ConnectionError:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
