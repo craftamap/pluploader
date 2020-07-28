@@ -15,6 +15,7 @@ import coloredlogs
 
 from pluploader import pathutil
 from pluploader import upmapi as upm
+import pluploader
 
 LOGO = f"""
 {Fore.YELLOW} ))))          {Fore.RED}           ((((
@@ -62,16 +63,17 @@ def main():
     p = configargparse.ArgParser(
         default_config_files=config_locations,
         config_file_parser_class=configargparse.YAMLConfigFileParser)
-    p.add("--base-url", default="http://localhost:8090")
-    p.add("--user", default="admin")
-    p.add("--password", default="admin")
-    p.add("--scheme", default="http")
-    p.add("--host", default="localhost")
-    p.add("--path", default="/")
-    p.add("--port", default="8090")
-    p.add("-f", "--file", type=configargparse.FileType("rb"))
-    p.add("-i", "--interactive", default=False, action='store_true')
-    p.add("--no-logo", default=False, action="store_true")
+    p.add_argument("--base-url", default="http://localhost:8090")
+    p.add_argument("--user", default="admin")
+    p.add_argument("--password", default="admin")
+    p.add_argument("--scheme", default="http")
+    p.add_argument("--host", default="localhost")
+    p.add_argument("--path", default="/")
+    p.add_argument("--port", default="8090")
+    p.add_argument("-f", "--file", type=configargparse.FileType("rb"))
+    p.add_argument("-i", "--interactive", default=False, action='store_true')
+    p.add_argument("--no-logo", default=False, action="store_true")
+    p.add_argument("--version", default=False, action="store_true")
 
     commandparser = p.add_subparsers(dest="command")
 
@@ -110,17 +112,22 @@ def main():
 
     base_url: furl = base_url_from_args(args, all_defaults)
 
-    if (not args.no_logo):
+    if not args.no_logo:
         print(LOGO)
-    if (args.command == "list"):
+
+    if args.version:
+        print(pluploader.__version__)
+        sys.exit(0)
+
+    if args.command == "list":
         list_all(base_url, args)
-    elif (args.command == "enable"):
+    elif args.command == "enable":
         enable_plugin(base_url, args)
-    elif (args.command == "disable"):
+    elif args.command == "disable":
         disable_plugin(base_url, args)
-    elif (args.command == "uninstall"):
+    elif args.command == "uninstall":
         uninstall_plugin(base_url, args)
-    elif (args.command == "info"):
+    elif args.command == "info":
         plugin_info(base_url, args)
     elif args.command == "safe-mode":
         if args.subcommand == "status" or args.subcommand is None:
@@ -303,14 +310,19 @@ def install(base_url, args):
                             f"was disabled. "
         all, enabled, disabled = upm.module_status(previous_request)
         logging.info("plugin uploaded and " + status + f" ({enabled} of {all} modules enabled)")
-        if len(disabled) != 0:
+        if len(disabled) != 0 and len(disabled) != all:
             for module in disabled:
                 logging.info(f"   - {module.key} is disabled")
-    except Exception as e:
+        elif len(disabled) == all:
+                logging.error("Your plugin was installed successfully but all modules are disabled. "
+                              "This is often caused by problems such as importing services that are "
+                              "not properly defined in your atlassian-plugin.xml.")
+                logging.error("Check the logs of your Atlassian host to find out more.")
+    except:
         logging.error("An error occured while uploading plugin")
         sys.exit(1)
 
-
+          
 def safemode_status(base_url, args):
     try:
         safemode_st = f"{Fore.YELLOW}enabled{Fore.RESET}" if upm.get_safemode(
