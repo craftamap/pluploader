@@ -98,6 +98,13 @@ def main():
     uninstall_parser = commandparser.add_parser("uninstall")
     uninstall_parser.add_argument("plugin", nargs='?', default=None)
 
+    safemode_parser = commandparser.add_parser("safe-mode")
+    safemode_subparser = safemode_parser.add_subparsers(dest="subcommand")
+    safemode_status_parser = safemode_subparser.add_parser("status")
+    safemode_enable_parser = safemode_subparser.add_parser("enable")
+    safemode_disable_parser = safemode_subparser.add_parser("disable")
+    safemode_disable_parser.add_argument("--keep-state", default=False, action="store_true")
+
     commandparser.add_parser("install")
 
     args = p.parse_args()
@@ -122,6 +129,13 @@ def main():
         uninstall_plugin(base_url, args)
     elif args.command == "info":
         plugin_info(base_url, args)
+    elif args.command == "safe-mode":
+        if args.subcommand == "status" or args.subcommand is None:
+            safemode_status(base_url, args)
+        elif args.subcommand == "enable":
+            safemode_enable(base_url, args)
+        elif args.subcommand == "disable":
+            safemode_disable(base_url, args)
     else:
         install(base_url, args)
 
@@ -306,6 +320,53 @@ def install(base_url, args):
                 logging.error("Check the logs of your Atlassian host to find out more.")
     except:
         logging.error("An error occured while uploading plugin")
+        sys.exit(1)
+
+          
+def safemode_status(base_url, args):
+    try:
+        safemode_st = f"{Fore.YELLOW}enabled{Fore.RESET}" if upm.get_safemode(
+            base_url) else f"{Fore.GREEN}disabled{Fore.RESET}"
+        logging.info(f"Safe-mode is currently {safemode_st}")
+    except requests.exceptions.ConnectionError:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except Exception as e:
+        logging.error(f"An error occured - check your credentials")
+        logging.error(f"{e}")
+        sys.exit(1)
+
+
+def safemode_enable(base_url, args):
+    try:
+        success = upm.enable_disable_safemode(base_url, True)
+        if success:
+            logging.info(f"Safe-mode is now {Fore.GREEN}enabled{Fore.RESET}")
+        else:
+            logging.error(f"Could not enable safe-mode - is safe-mode already enabled?")
+    except requests.exceptions.ConnectionError:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except Exception as e:
+        logging.error(f"An error occured - check your credentials")
+        logging.error(f"{e}")
+        sys.exit(1)
+
+
+def safemode_disable(base_url, args):
+    try:
+        success = upm.enable_disable_safemode(base_url, False, args.keep_state)
+        if success:
+            logging.info(
+                f"Safe-mode is now {Fore.GREEN}disabled{Fore.RESET}, all plugins {'got restored' if not args.keep_state else 'stayed disabled'}.")
+        else:
+            logging.error(f"Could not disable safe-mode - is safe-mode already disabled?")
+    except requests.exceptions.ConnectionError:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except Exception as e:
+        logging.error(f"An error occured - check your credentials")
+        logging.error(f"{e}")
         sys.exit(1)
 
 

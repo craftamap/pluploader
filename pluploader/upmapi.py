@@ -195,3 +195,29 @@ def module_status(previous_request: dict) -> typing.Tuple[int, int, typing.List[
         else:
             disabled_modules.append(module)
     return all_modules, enabled_modules, disabled_modules
+
+
+def get_safemode(base_url: furl) -> bool:
+    request_url = base_url.copy()
+    request_url.add(path=UPM_API_ENDPOINT)
+    request_url.add(path="safe-mode")
+    response = requests.get(request_url.url)
+    return response.json().get("enabled")
+
+
+def enable_disable_safemode(base_url: furl, enable: bool, keepState: bool = False) -> bool:
+    headers = {"Content-Type": "application/vnd.atl.plugins.safe.mode.flag+json"}
+    data = {
+        "enabled": enable,
+        "links": {},
+    }
+
+    request_url = base_url.copy()
+    request_url.add(path=UPM_API_ENDPOINT)
+    request_url.add(path="safe-mode")
+    request_url.add(query_params={"keepState": "true" if keepState else "false"})
+    response = requests.put(request_url.url,
+                            headers=headers,
+                            json=data)
+    response_json = response.json()
+    return "subCode" not in response_json and response_json["enabled"] == enable
