@@ -289,12 +289,18 @@ def install(base_url, args):
                             f"was disabled. "
         all, enabled, disabled = upm.module_status(previous_request)
         logging.info("plugin uploaded and " + status + f" ({enabled} of {all} modules enabled)")
-        if len(disabled) != 0:
+        if len(disabled) != 0 and len(disabled) != all:
             for module in disabled:
                 logging.info(f"   - {module.key} is disabled")
-    except Exception as e:
+        elif len(disabled) == all:
+                logging.error("Your plugin was installed successfully but all modules are disabled. "
+                              "This is often caused by problems such as importing services that are "
+                              "not properly defined in your atlassian-plugin.xml.")
+                logging.error("Check the logs of your Atlassian host to find out more.")
+    except:
         logging.error("An error occured while uploading plugin")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
