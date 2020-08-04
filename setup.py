@@ -32,6 +32,7 @@ setuptools.setup(
         "furl",
         "PyYAML",
         "packaging",
-        "coloredlogs"
+        "coloredlogs",
+        "importlib-metadata"
     ]
 )
