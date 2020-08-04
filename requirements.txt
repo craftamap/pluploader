@@ -5,3 +5,6 @@ configargparse
 furl
 PyYAML
 packaging
+coloredlogs
+importlib-metadata
+dataclasses

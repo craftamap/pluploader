@@ -33,6 +33,7 @@ setuptools.setup(
         "PyYAML",
         "packaging",
         "coloredlogs",
-        "importlib-metadata"
+        "importlib-metadata",
+        "dataclasses"
     ]
 )
