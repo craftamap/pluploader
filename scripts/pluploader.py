@@ -55,11 +55,13 @@ class TqdmUpTo(tqdm):
 def main():
     """ Sets up configargparse
     """
-    project_root = pathutil.find_maven_project_root(".")
     config_locations = ["~/.pluprc"]
-
-    if project_root is not False:
+    try:
+        project_root = pathutil.find_maven_project_root(".")
         config_locations.append(os.path.join(project_root, ".pluprc"))
+    except FileNotFoundError:
+        pass
+
     p = configargparse.ArgParser(
         default_config_files=config_locations, config_file_parser_class=configargparse.YAMLConfigFileParser,
     )
@@ -90,9 +92,8 @@ def main():
         "-f",
         "--file",
         type=configargparse.FileType("rb"),
-        help="Pluploader tries find an plugin in the current directory. If you"
-        " want to specify the location of the plugin you want to upload, "
-        "use -f /path/to/jar",
+        help="Pluploader tries find an plugin in the current directory. If you want to specify the location of the plugin you"
+        "want to upload, use -f /path/to/jar",
     )
     p.add_argument(
         "-i",
@@ -229,10 +230,11 @@ def plugin_info(base_url, args):
     """ Prints out all available information about a plugin """
     plugin = args.plugin
     if plugin is None:
-        plugin = pathutil.get_plugin_key_from_pom()
-    if plugin is None:
-        logging.error("Could not find the plugin you want to get the info of.")
-        sys.exit(1)
+        try:
+            plugin = pathutil.get_plugin_key_from_pom()
+        except pathutil.PluginKeyNotFoundError:
+            logging.error("Could not find the plugin you want to get the info of.")
+            sys.exit(1)
     try:
         info = upm.get_plugin(base_url, plugin)
     except requests.exceptions.ConnectionError:
@@ -269,10 +271,11 @@ def disable_plugin(base_url, args):
     """ Disables the specified plugin """
     plugin = args.plugin
     if plugin is None:
-        plugin = pathutil.get_plugin_key_from_pom()
-    if plugin is None:
-        logging.error("Could not find the plugin you want to disable.")
-        sys.exit(1)
+        try:
+            plugin = pathutil.get_plugin_key_from_pom()
+        except pathutil.PluginKeyNotFoundError:
+            logging.error("Could not find the plugin you want to get the info of.")
+            sys.exit(1)
     try:
         response = upm.enable_disable_plugin(base_url, plugin, False)
     except requests.exceptions.ConnectionError:
@@ -290,10 +293,11 @@ def uninstall_plugin(base_url, args):
     the plugin of the current dir """
     plugin = args.plugin
     if plugin is None:
-        plugin = pathutil.get_plugin_key_from_pom()
-    if plugin is None:
-        logging.error("Could not find the plugin you want to uninstall.")
-        sys.exit(1)
+        try:
+            plugin = pathutil.get_plugin_key_from_pom()
+        except pathutil.PluginKeyNotFoundError:
+            logging.error("Could not find the plugin you want to get the info of.")
+            sys.exit(1)
     try:
         status = upm.uninstall_plugin(base_url, plugin)
     except requests.exceptions.ConnectionError:
@@ -312,34 +316,33 @@ def uninstall_plugin(base_url, args):
 def install(base_url, args):
     """ Actual code of the pluploader
     """
-    try:
-        files = {}
-        if args.file is None:
-            try:
-                plugin = pathutil.get_jar_from_pom()
-                if plugin is None:
-                    raise FileNotFoundError()
-                files.update({"plugin": plugin})
-            except FileNotFoundError:
-                logging.error("Could not find the plugin you want to install." " Are you in a maven directory?")
-                sys.exit(1)
-        else:
-            files.update({"plugin": args.file})
-
-        logging.info(f"{os.path.basename(files.get('plugin').name)} will be uploaded" f" to {base_url.host}:{base_url.port}")
-        if args.interactive:
-            confirm = input("Do you really want to upload and install the plugin? (y/N) ")
-            if confirm.lower() != "y":
-                sys.exit()
+    files = {}
+    if args.file is None:
         try:
-            token = upm.get_token(base_url)
-        except requests.exceptions.ConnectionError:
-            logging.error("Could not connect to host - check your base-url")
+            plugin_path = pathutil.get_jar_path_from_pom()
+            plugin = open(plugin_path, "rb")
+            files.update({"plugin": plugin})
+        except FileNotFoundError:
+            logging.error("Could not find the plugin you want to install. Are you in a maven directory?")
             sys.exit(1)
-        except KeyError:
-            logging.error("UPM Token couldn't be retrieved; " "are your credentials correct?")
-            sys.exit(1)
+    else:
+        files.update({"plugin": args.file})
 
+    logging.info(f"{os.path.basename(files.get('plugin').name)} will be uploaded to {base_url.host}:{base_url.port}")
+    if args.interactive:
+        confirm = input("Do you really want to upload and install the plugin? (y/N) ")
+        if confirm.lower() != "y":
+            sys.exit()
+    try:
+        token = upm.get_token(base_url)
+    except requests.exceptions.RequestException:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except KeyError:
+        logging.error("UPM Token couldn't be retrieved; " "are your credentials correct?")
+        sys.exit(1)
+
+    try:
         with TqdmUpTo(total=100) as pbar:
             pbar.update_to(0)
             progress, previous_request = upm.upload_plugin(base_url, files, token)
@@ -347,31 +350,28 @@ def install(base_url, args):
                 progress, previous_request = upm.get_current_progress(base_url, previous_request)
                 pbar.update_to(progress)
                 time.sleep(0.1)
-        status = (
-            f"{Fore.GREEN}enabled{Fore.RESET}!"
-            if previous_request["enabled"]
-            else f"{Fore.RED}disabled{Fore.RESET}! \n"
-            f"You should check the logs "
-            f"of your Atlassian host to "
-            f"find out why your plugin "
-            f"was disabled. "
-        )
-        all_nr, enabled, disabled = upm.module_status(previous_request)
-        logging.info("plugin uploaded and " + status + f" ({enabled} of {all_nr} modules enabled)")
-        if len(disabled) != 0 and len(disabled) != all_nr:
-            for module in disabled:
-                logging.info(f"   - {module.key} is disabled")
-        elif len(disabled) == all_nr:
-            logging.error(
-                "Your plugin was installed successfully but all modules are "
-                "disabled. This is often caused by problems such as importing"
-                " services that are not properly defined in your "
-                "atlassian-plugin.xml."
-            )
-            logging.error("Check the logs of your Atlassian host to find out more.")
-    except:
+    except requests.exceptions.RequestException:
         logging.error("An error occured while uploading plugin")
         sys.exit(1)
+    if previous_request["enabled"]:
+        status = f"{Fore.GREEN}enabled{Fore.RESET}!"
+    else:
+        status = (
+            f"{Fore.RED}disabled{Fore.RESET}! \n"
+            "You should check the logs of your Atlassian host to find out why your plugin was disabled."
+        )
+
+    all_nr, enabled, disabled = upm.module_status(previous_request)
+    logging.info("plugin uploaded and " + status + f" ({enabled} of {all_nr} modules enabled)")
+    if len(disabled) != 0 and len(disabled) != all_nr:
+        for module in disabled:
+            logging.info(f"   - {module.key} is disabled")
+    elif len(disabled) == all_nr:
+        logging.error(
+            "Your plugin was installed successfully but all modules are disabled. This is often caused by problems such as"
+            " importing services that are not properly defined in your atlassian-plugin.xml."
+        )
+        logging.error("Check the logs of your Atlassian host to find out more.")
 
 
 def safemode_status(base_url, args):

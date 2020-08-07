@@ -7,7 +7,11 @@ import typing
 import xml.etree.ElementTree as ET
 
 
-def get_jar_from_pom() -> typing.BinaryIO:
+class PluginKeyNotFoundError(RuntimeError):
+    pass
+
+
+def get_jar_path_from_pom() -> os.PathLike:
     """ Get jar to upload based on maven pom
 
     This function reads the pom and analyses which artifact was build by the last
@@ -20,8 +24,7 @@ def get_jar_from_pom() -> typing.BinaryIO:
     artifact_id = root.find("ns:artifactId", namespace).text
     version = root.find("ns:version", namespace).text
 
-    filepath = os.path.join(rootdir, "target", f"{artifact_id}-{version}.jar")
-    return open(filepath, "rb")
+    return os.path.join(rootdir, "target", f"{artifact_id}-{version}.jar")
 
 
 def get_plugin_key_from_pom() -> str:
@@ -29,21 +32,18 @@ def get_plugin_key_from_pom() -> str:
 
     This function reads the pom and analyses which plugin will be built.
     """
-    rootdir = find_maven_project_root(".")
-    namespace = {"ns": "http://maven.apache.org/POM/4.0.0"}
-    if os.path.isfile(f"{rootdir}/pom.xml"):
-        try:
-            root = ET.parse(f"{rootdir}/pom.xml").getroot()
-            properties = root.find("ns:properties", namespace)
-            plugin_id = properties.find("ns:atlassian.plugin.key", namespace).text
-            return plugin_id
-        except:
-            return None
-    else:
-        return None
+    try:
+        rootdir = find_maven_project_root(".")
+        namespace = {"ns": "http://maven.apache.org/POM/4.0.0"}
+        root = ET.parse(f"{rootdir}/pom.xml").getroot()
+        properties = root.find("ns:properties", namespace)
+        plugin_id = properties.find("ns:atlassian.plugin.key", namespace).text
+        return plugin_id
+    except Exception as exc:
+        raise PluginKeyNotFoundError(exc)
 
 
-def find_maven_project_root(working_path: os.PathLike = ".",) -> typing.Union[os.PathLike, bool]:
+def find_maven_project_root(working_path: os.PathLike = ".") -> os.PathLike:
     """Tries to find a maven project root directory.
 
     Tries to find a maven project root directory if the current path is a
@@ -54,12 +54,10 @@ def find_maven_project_root(working_path: os.PathLike = ".",) -> typing.Union[os
     Returns:
         the absolute project path
     """
-    project_root = False
     for walk_tuple in _walk_up(working_path):
         if "pom.xml" in walk_tuple[2]:
-            project_root = walk_tuple[0]
-            break
-    return project_root
+            return walk_tuple[0]
+    raise FileNotFoundError()
 
 
 def _walk_up(
