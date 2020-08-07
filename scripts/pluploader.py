@@ -1,21 +1,21 @@
 """ pluploader executable
 """
 
-import time
-import sys
-import os.path
 import logging
-import configargparse
+import os.path
+import sys
+import time
 
+import coloredlogs
+import configargparse
 import requests
+from colorama import Fore
 from furl import furl
 from tqdm import tqdm
-from colorama import Fore
-import coloredlogs
 
+import pluploader
 from pluploader import pathutil
 from pluploader import upmapi as upm
-import pluploader
 
 LOGO = f"""
 {Fore.YELLOW} ))))          {Fore.RED}           ((((
@@ -31,12 +31,13 @@ LOGO = f"""
 {Fore.YELLOW}            {Fore.RED}/{Fore.GREEN}|||||{Fore.YELLOW}\\
 {Fore.RESET}"""
 
-coloredlogs.install(level='DEBUG')
-coloredlogs.install(fmt='%(asctime)s %(levelname)s %(message)s')
+coloredlogs.install(level="DEBUG")
+coloredlogs.install(fmt="%(asctime)s %(levelname)s %(message)s")
 
 
 class TqdmUpTo(tqdm):
     """Provides `update_to(n)` which uses `tqdm.update(delta_n)`."""
+
     def update_to(self, b=1, bsize=1, tsize=None):
         """
         b  : int, optional
@@ -60,129 +61,89 @@ def main():
     if project_root is not False:
         config_locations.append(os.path.join(project_root, ".pluprc"))
     p = configargparse.ArgParser(
-        default_config_files=config_locations,
-        config_file_parser_class=configargparse.YAMLConfigFileParser)
+        default_config_files=config_locations, config_file_parser_class=configargparse.YAMLConfigFileParser,
+    )
     p.add_argument(
         "--base-url",
         default="http://localhost:8090",
         help="Set the base-url of your instance. This flag will overwrite "
         "scheme, host, path and port, if those are set in this string."
-        "Defaults to: http://localhost:8090")
+        "Defaults to: http://localhost:8090",
+    )
     p.add_argument(
-        "--user",
-        default="admin",
-        help="Set the username of the user you want to use. Defaults to admin")
+        "--user", default="admin", help="Set the username of the user you want to use. Defaults to admin",
+    )
     p.add_argument(
-        "--password",
-        default="admin",
-        help="Set the password of the user you want to use. Defaults to admin")
+        "--password", default="admin", help="Set the password of the user you want to use. Defaults to admin",
+    )
     p.add_argument(
-        "--scheme",
-        default="http",
-        help="Set the HTTP-Scheme you want to use. Defaults to http. "
-        "Options: http, https")
+        "--scheme", default="http", help="Set the HTTP-Scheme you want to use. Defaults to http. " "Options: http, https",
+    )
     p.add_argument(
-        "--host",
-        default="localhost",
-        help="Set the host you want to use; Defaults to localhost")
+        "--host", default="localhost", help="Set the host you want to use; Defaults to localhost",
+    )
     p.add_argument(
-        "--path",
-        default="/",
-        help="Set the context-path you want to use. Defaults to /; "
-             "You may want to use /confluence")
-    p.add_argument(
-        "--port",
-        default="8090",
-        help="Defaults to 8090")
+        "--path", default="/", help="Set the context-path you want to use. Defaults to /; " "You may want to use /confluence",
+    )
+    p.add_argument("--port", default="8090", help="Defaults to 8090")
     p.add_argument(
         "-f",
         "--file",
         type=configargparse.FileType("rb"),
         help="Pluploader tries find an plugin in the current directory. If you"
-             " want to specify the location of the plugin you want to upload, "
-             "use -f /path/to/jar")
+        " want to specify the location of the plugin you want to upload, "
+        "use -f /path/to/jar",
+    )
     p.add_argument(
         "-i",
         "--interactive",
         default=False,
         action="store_true",
-        help="You will be asked if you really want to upload the plugin"
+        help="You will be asked if you really want to upload the plugin",
     )
     p.add_argument(
-        "--no-logo",
-        default=False,
-        action="store_true",
-        help="the lively apps logo will not be printed"
+        "--no-logo", default=False, action="store_true", help="the lively apps logo will not be printed",
     )
     p.add_argument("--version", default=False, action="store_true")
 
     commandparser = p.add_subparsers(dest="command")
 
-    listparser = commandparser.add_parser(
-        "list",
-        help="list all installed plugins"
-    )
+    listparser = commandparser.add_parser("list", help="list all installed plugins")
     listparser.add_argument(
         "--all",
         help="prints all plugins instead of only user installed plugins",
         action="store_true",
         default=False,
-        dest="print_all")
-
-    infoparser = commandparser.add_parser(
-        "info",
-        help="prints information of the plugin specified by the plugin key"
+        dest="print_all",
     )
-    infoparser.add_argument("plugin", nargs='?', default=None)
-    infoparser.add_argument("--show-modules",
-                            default=False,
-                            action="store_true")
 
-    enable_parser = commandparser.add_parser(
-        "enable",
-        help="enables specified plugin"
-    )
-    enable_parser.add_argument("plugin", nargs='?', default=None)
+    infoparser = commandparser.add_parser("info", help="prints information of the plugin specified by the plugin key")
+    infoparser.add_argument("plugin", nargs="?", default=None)
+    infoparser.add_argument("--show-modules", default=False, action="store_true")
 
-    disable_parser = commandparser.add_parser(
-        "disable",
-        help="disables specified plugin"
-    )
-    disable_parser.add_argument("plugin", nargs='?', default=None)
+    enable_parser = commandparser.add_parser("enable", help="enables specified plugin")
+    enable_parser.add_argument("plugin", nargs="?", default=None)
 
-    uninstall_parser = commandparser.add_parser(
-        "uninstall",
-        help="uninstalls specified plugin"
-    )
-    uninstall_parser.add_argument("plugin", nargs='?', default=None)
+    disable_parser = commandparser.add_parser("disable", help="disables specified plugin")
+    disable_parser.add_argument("plugin", nargs="?", default=None)
 
-    safemode_parser = commandparser.add_parser(
-        "safe-mode",
-        help="controls safe-mode")
+    uninstall_parser = commandparser.add_parser("uninstall", help="uninstalls specified plugin")
+    uninstall_parser.add_argument("plugin", nargs="?", default=None)
+
+    safemode_parser = commandparser.add_parser("safe-mode", help="controls safe-mode")
     safemode_subparser = safemode_parser.add_subparsers(dest="subcommand")
-    safemode_subparser.add_parser(
-        "status",
-        help="prints the current status of safe-mode"
-    )
-    safemode_subparser.add_parser(
-        "enable",
-        help="enables safe-mode"
-    )
-    safemode_disable_parser = safemode_subparser.add_parser(
-        "disable",
-        help="disables safe-mode"
-    )
+    safemode_subparser.add_parser("status", help="prints the current status of safe-mode")
+    safemode_subparser.add_parser("enable", help="enables safe-mode")
+    safemode_disable_parser = safemode_subparser.add_parser("disable", help="disables safe-mode")
     safemode_disable_parser.add_argument(
         "--keep-state",
         default=False,
         action="store_true",
-        help="If keep-state is enabled, safe-mode will be disabled, but all"
-             "plugins will stay disabled")
+        help="If keep-state is enabled, safe-mode will be disabled, but all" "plugins will stay disabled",
+    )
 
     commandparser.add_parser(
-        "install",
-        help="installs the plugin of the current maven project or "
-             "a specified one; you can also omit install"
+        "install", help="installs the plugin of the current maven project or a specified one; you can also omit install",
     )
 
     args = p.parse_args()
@@ -260,8 +221,7 @@ def list_all(base_url, args):
         else:
             status = f"{Fore.YELLOW}!{Fore.RESET}"
 
-        plugin_infos = f"{status} {plugin.name[:25]:25}" \
-                       + f" {str(plugin.version)[:13]:13} ({plugin.key})"
+        plugin_infos = f"{status} {plugin.name[:25]:25}" + f" {str(plugin.version)[:13]:13} ({plugin.key})"
         print(plugin_infos)
 
 
@@ -346,8 +306,7 @@ def uninstall_plugin(base_url, args):
     if status:
         logging.info("Plugin successfully uninstalled")
     else:
-        logging.error(
-            "An error occurred. The plugin could not be uninstalled.")
+        logging.error("An error occurred. The plugin could not be uninstalled.")
 
 
 def install(base_url, args):
@@ -360,20 +319,16 @@ def install(base_url, args):
                 plugin = pathutil.get_jar_from_pom()
                 if plugin is None:
                     raise FileNotFoundError()
-                files.update({'plugin': plugin})
+                files.update({"plugin": plugin})
             except FileNotFoundError:
-                logging.error("Could not find the plugin you want to install."
-                              " Are you in a maven directory?")
+                logging.error("Could not find the plugin you want to install." " Are you in a maven directory?")
                 sys.exit(1)
         else:
-            files.update({'plugin': args.file})
+            files.update({"plugin": args.file})
 
-        logging.info(
-            f"{os.path.basename(files.get('plugin').name)} will be uploaded"
-            f" to {base_url.host}:{base_url.port}")
+        logging.info(f"{os.path.basename(files.get('plugin').name)} will be uploaded" f" to {base_url.host}:{base_url.port}")
         if args.interactive:
-            confirm = input(
-                "Do you really want to upload and install the plugin? (y/N) ")
+            confirm = input("Do you really want to upload and install the plugin? (y/N) ")
             if confirm.lower() != "y":
                 sys.exit()
         try:
@@ -382,28 +337,27 @@ def install(base_url, args):
             logging.error("Could not connect to host - check your base-url")
             sys.exit(1)
         except KeyError:
-            logging.error("UPM Token couldn't be retrieved; "
-                          "are your credentials correct?")
+            logging.error("UPM Token couldn't be retrieved; " "are your credentials correct?")
             sys.exit(1)
 
         with TqdmUpTo(total=100) as pbar:
             pbar.update_to(0)
-            progress, previous_request = upm.upload_plugin(
-                base_url, files, token)
+            progress, previous_request = upm.upload_plugin(base_url, files, token)
             while progress != 100:
-                progress, previous_request = upm.get_current_progress(
-                    base_url, previous_request)
+                progress, previous_request = upm.get_current_progress(base_url, previous_request)
                 pbar.update_to(progress)
                 time.sleep(0.1)
-        status = f"{Fore.GREEN}enabled{Fore.RESET}!" if previous_request[
-            "enabled"] else f"{Fore.RED}disabled{Fore.RESET}! \n" \
-                            f"You should check the logs " \
-                            f"of your Atlassian host to " \
-                            f"find out why your plugin " \
-                            f"was disabled. "
+        status = (
+            f"{Fore.GREEN}enabled{Fore.RESET}!"
+            if previous_request["enabled"]
+            else f"{Fore.RED}disabled{Fore.RESET}! \n"
+            f"You should check the logs "
+            f"of your Atlassian host to "
+            f"find out why your plugin "
+            f"was disabled. "
+        )
         all_nr, enabled, disabled = upm.module_status(previous_request)
-        logging.info("plugin uploaded and " + status +
-                     f" ({enabled} of {all_nr} modules enabled)")
+        logging.info("plugin uploaded and " + status + f" ({enabled} of {all_nr} modules enabled)")
         if len(disabled) != 0 and len(disabled) != all_nr:
             for module in disabled:
                 logging.info(f"   - {module.key} is disabled")
@@ -412,9 +366,9 @@ def install(base_url, args):
                 "Your plugin was installed successfully but all modules are "
                 "disabled. This is often caused by problems such as importing"
                 " services that are not properly defined in your "
-                "atlassian-plugin.xml.")
-            logging.error(
-                "Check the logs of your Atlassian host to find out more.")
+                "atlassian-plugin.xml."
+            )
+            logging.error("Check the logs of your Atlassian host to find out more.")
     except:
         logging.error("An error occured while uploading plugin")
         sys.exit(1)
@@ -423,14 +377,15 @@ def install(base_url, args):
 def safemode_status(base_url, args):
     """ prints out the safemode status """
     try:
-        safemode_st = f"{Fore.YELLOW}enabled{Fore.RESET}" if upm.get_safemode(
-            base_url) else f"{Fore.GREEN}disabled{Fore.RESET}"
+        safemode_st = (
+            f"{Fore.YELLOW}enabled{Fore.RESET}" if upm.get_safemode(base_url) else f"{Fore.GREEN}disabled{Fore.RESET}"
+        )
         logging.info("Safe-mode is currently %s", safemode_st)
     except requests.exceptions.ConnectionError:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
     except Exception as e:
-        logging.error(f"An error occured - check your credentials")
+        logging.error("An error occured - check your credentials")
         logging.error(f"{e}")
         sys.exit(1)
 
@@ -441,8 +396,7 @@ def safemode_enable(base_url, args):
         if success:
             logging.info(f"Safe-mode is now {Fore.GREEN}enabled{Fore.RESET}")
         else:
-            logging.error(
-                f"Could not enable safe-mode - is safe-mode already enabled?")
+            logging.error("Could not enable safe-mode - is safe-mode already enabled?")
     except requests.exceptions.ConnectionError:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
@@ -461,8 +415,7 @@ def safemode_disable(base_url, args):
                 f"{'got restored' if not args.keep_state else 'stayed disabled'}."
             )
         else:
-            logging.error(
-                "Could not disable safe-mode - is safe-mode already disabled?")
+            logging.error("Could not disable safe-mode - is safe-mode already disabled?")
     except requests.exceptions.ConnectionError:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)

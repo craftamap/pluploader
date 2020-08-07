@@ -1,0 +1,18 @@
+[project]
+name = "pluploader"
+description = "CLI Confluence/Jira Plugin uploader"
+authors = [
+    "Fabian Siegel <fabian@livelyapps.com>"
+]
+license = "Apache License 2.0"
+readme = "README.md"
+python = "^3.6"
+repository = "https://github.com/livelyapps/pluploader"
+
+[tool.black]
+line-length = 127
+target_version = ['py36']
+include = '\.pyi?$'
+exclude = '''
+
+'''

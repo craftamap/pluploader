@@ -2,7 +2,6 @@
 """
 
 import dataclasses
-import inspect
 import json
 import typing
 
@@ -25,7 +24,7 @@ class ModuleDto:
     broken: bool
 
     @staticmethod
-    def decode(obj: dict) -> typing.Union['ModuleDto', dict]:
+    def decode(obj: dict) -> typing.Union["ModuleDto", dict]:
         if "key" in obj:
             return ModuleDto(
                 key=obj.get("key"),
@@ -34,7 +33,7 @@ class ModuleDto:
                 enabled=obj.get("enabled", False),
                 optional=obj.get("optional", False),
                 recognisableType=obj.get("recognisableType", False),
-                broken=obj.get("broken", True)
+                broken=obj.get("broken", True),
             )
         return obj
 
@@ -43,6 +42,7 @@ class ModuleDto:
 class PluginDto:
     """ This class represents a plugin given by the UPM/Plugin API
     """
+
     key: str
     name: str
     version: version.Version
@@ -67,7 +67,7 @@ class PluginDto:
                 print(f"{(key + ':'):15} {value}")
 
     @staticmethod
-    def decode(obj: dict) -> typing.Union['PluginDto', dict]:
+    def decode(obj: dict) -> typing.Union["PluginDto", dict]:
         if "key" in obj:
             return PluginDto(
                 key=obj.get("key"),
@@ -76,9 +76,7 @@ class PluginDto:
                 userInstalled=obj.get("userInstalled", False),
                 enabled=obj.get("enabled", False),
                 description=obj.get("description", ""),
-                modules=[
-                    ModuleDto.decode(x) for x in obj.get("modules", [])
-                ]
+                modules=[ModuleDto.decode(x) for x in obj.get("modules", [])],
             )
         return obj
 
@@ -90,7 +88,7 @@ def get_token(base_url: furl) -> str:
     token_url.add(path=UPM_API_ENDPOINT)
     token_url.set(args={"os_authType": "basic"})
     token_response = requests.head(token_url.url)
-    token = token_response.headers['upm-token']
+    token = token_response.headers["upm-token"]
     return token
 
 
@@ -100,8 +98,7 @@ def upload_plugin(base_url: furl, files: typing.Dict, token: str) -> typing.Tupl
     upload_url = base_url.copy()
     upload_url.set(args={"token": token})
     upload_url.add(path=UPM_API_ENDPOINT)
-    upload_response = requests.post(upload_url.url,
-                                    files=files)
+    upload_response = requests.post(upload_url.url, files=files)
     text = upload_response.text.replace("<textarea>", "").replace("</textarea>", "")
     upload_response_data = json.loads(text)
     progress = int(upload_response_data.get("status", {}).get("amountDownloaded", 0))
@@ -113,13 +110,12 @@ def get_current_progress(base_url: furl, previous_request) -> (int, typing.Dict)
     progress_url.set(path=previous_request["links"]["self"])
     progress_rd = requests.get(progress_url.url).json()
     if "type" in progress_rd:
-        progress = int(
-            progress_rd.get("status", {}).get("amountDownloaded", 0))
+        progress = int(progress_rd.get("status", {}).get("amountDownloaded", 0))
         return progress, progress_rd
     return 100, progress_rd
 
 
-def get_all_plugins(base_url: furl, user_installed: bool = True) -> typing.List['PluginDto']:
+def get_all_plugins(base_url: furl, user_installed: bool = True) -> typing.List["PluginDto"]:
     """ Gets a list of all installed plugins from the api and returns it
     If user_installed is set true (default), only user installed plugins are listed
     """
@@ -132,7 +128,7 @@ def get_all_plugins(base_url: furl, user_installed: bool = True) -> typing.List[
     return return_obj
 
 
-def get_plugin(base_url: furl, plugin_key: str) -> 'PluginDto':
+def get_plugin(base_url: furl, plugin_key: str) -> "PluginDto":
     """ Gets Plugin info by using the UPM_API_ENDPOINT/plugin-key/ endpoint and
     returns it as a PluginDto
     """
@@ -144,13 +140,13 @@ def get_plugin(base_url: furl, plugin_key: str) -> 'PluginDto':
     return return_obj
 
 
-def enable_disable_plugin(base_url: furl, plugin_key: str, enabled: bool) -> 'PluginDto':
+def enable_disable_plugin(base_url: furl, plugin_key: str, enabled: bool) -> "PluginDto":
     """ Enables/Disables Plugin"""
     mod = {"enabled": enabled}
     return _modify_plugin(base_url, plugin_key, mod)
 
 
-def _modify_plugin(base_url: furl, plugin_key: str, modifications: dict) -> 'PluginDto':
+def _modify_plugin(base_url: furl, plugin_key: str, modifications: dict) -> "PluginDto":
     """ Puts Changes to plugin by using the UPM_API_ENDPOINT/plugin-key/ endpoint and
     returns new infos as a PluginDto
     """
@@ -158,9 +154,7 @@ def _modify_plugin(base_url: furl, plugin_key: str, modifications: dict) -> 'Plu
     request_url.add(path=UPM_API_ENDPOINT)
     request_url.join(plugin_key + "-key")
     headers = {"Content-Type": "application/vnd.atl.plugins.plugin+json"}
-    response = requests.put(request_url.url,
-                            json=modifications,
-                            headers=headers)
+    response = requests.put(request_url.url, json=modifications, headers=headers)
     return_obj = PluginDto.decode(response.json())
     return return_obj
 
@@ -177,7 +171,7 @@ def uninstall_plugin(base_url: furl, plugin_key: str) -> bool:
     return False
 
 
-def module_status(previous_request: dict) -> typing.Tuple[int, int, typing.List['ModuleDto']]:
+def module_status(previous_request: dict,) -> typing.Tuple[int, int, typing.List["ModuleDto"]]:
     """ Returns the module status of an plugin based on a request/dict containing an PluginDto
     returns an tuple containing
         1. number of all plugins
@@ -216,8 +210,6 @@ def enable_disable_safemode(base_url: furl, enable: bool, keepState: bool = Fals
     request_url.add(path=UPM_API_ENDPOINT)
     request_url.add(path="safe-mode")
     request_url.add(query_params={"keepState": "true" if keepState else "false"})
-    response = requests.put(request_url.url,
-                            headers=headers,
-                            json=data)
+    response = requests.put(request_url.url, headers=headers, json=data)
     response_json = response.json()
     return "subCode" not in response_json and response_json["enabled"] == enable

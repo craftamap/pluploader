@@ -1,9 +1,9 @@
 """ This module provides some basic path tools for the pluploader cli tool
 """
 
-import typing
 import os
 import os.path
+import typing
 import xml.etree.ElementTree as ET
 
 
@@ -16,7 +16,7 @@ def get_jar_from_pom() -> typing.BinaryIO:
     rootdir = find_maven_project_root(".")
     namespace = {"ns": "http://maven.apache.org/POM/4.0.0"}
 
-    root = ET.parse(f'{rootdir}/pom.xml').getroot()
+    root = ET.parse(f"{rootdir}/pom.xml").getroot()
     artifact_id = root.find("ns:artifactId", namespace).text
     version = root.find("ns:version", namespace).text
 
@@ -31,12 +31,11 @@ def get_plugin_key_from_pom() -> str:
     """
     rootdir = find_maven_project_root(".")
     namespace = {"ns": "http://maven.apache.org/POM/4.0.0"}
-    if os.path.isfile(f'{rootdir}/pom.xml'):
+    if os.path.isfile(f"{rootdir}/pom.xml"):
         try:
-            root = ET.parse(f'{rootdir}/pom.xml').getroot()
+            root = ET.parse(f"{rootdir}/pom.xml").getroot()
             properties = root.find("ns:properties", namespace)
-            plugin_id = properties.find("ns:atlassian.plugin.key",
-                                        namespace).text
+            plugin_id = properties.find("ns:atlassian.plugin.key", namespace).text
             return plugin_id
         except:
             return None
@@ -44,8 +43,7 @@ def get_plugin_key_from_pom() -> str:
         return None
 
 
-def find_maven_project_root(
-        working_path: os.PathLike = ".") -> typing.Union[os.PathLike, bool]:
+def find_maven_project_root(working_path: os.PathLike = ".",) -> typing.Union[os.PathLike, bool]:
     """Tries to find a maven project root directory.
 
     Tries to find a maven project root directory if the current path is a
@@ -65,9 +63,8 @@ def find_maven_project_root(
 
 
 def _walk_up(
-        start_path: os.PathLike = "."
-) -> typing.Tuple[os.PathLike, typing.Tuple[os.PathLike],
-                  typing.Tuple[os.PathLike]]:
+    start_path: os.PathLike = ".",
+) -> typing.Tuple[os.PathLike, typing.Tuple[os.PathLike], typing.Tuple[os.PathLike]]:
     """ Generator for walking up a file path. os.walk like behavior
 
     Args: start_path: a os.PathLike path to start from
@@ -79,6 +76,6 @@ def _walk_up(
     while True:
         walk_tuple = next(os.walk(os.path.join(*current_path_split)))
         yield walk_tuple
-        if current_path_split[1] == '':
+        if current_path_split[1] == "":
             return
         current_path_split = os.path.split(current_path_split[0])
