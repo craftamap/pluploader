@@ -2,7 +2,7 @@
 """
 
 import logging
-import os.path
+import pathlib
 import sys
 import time
 
@@ -57,8 +57,8 @@ def main():
     """
     config_locations = ["~/.pluprc"]
     try:
-        project_root = pathutil.find_maven_project_root(".")
-        config_locations.append(os.path.join(project_root, ".pluprc"))
+        project_root = pathutil.find_maven_project_root()
+        config_locations.append(project_root / ".pluprc")
     except FileNotFoundError:
         pass
 
@@ -328,7 +328,7 @@ def install(base_url, args):
     else:
         files.update({"plugin": args.file})
 
-    logging.info(f"{os.path.basename(files.get('plugin').name)} will be uploaded to {base_url.host}:{base_url.port}")
+    logging.info(f"{pathlib.Path((files.get('plugin').name)).name} will be uploaded to {base_url.host}:{base_url.port}")
     if args.interactive:
         confirm = input("Do you really want to upload and install the plugin? (y/N) ")
         if confirm.lower() != "y":
