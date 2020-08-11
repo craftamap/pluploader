@@ -23,10 +23,10 @@ class ModuleDto:
     recognisableType: bool
     broken: bool
 
-    @staticmethod
-    def decode(obj: dict) -> typing.Union["ModuleDto", dict]:
+    @classmethod
+    def decode(cls, obj: dict) -> "ModuleDto":
         if "key" in obj:
-            return ModuleDto(
+            return cls(
                 key=obj.get("key"),
                 completeKey=obj.get("completeKey", ""),
                 name=obj.get("name", ""),
@@ -35,7 +35,7 @@ class ModuleDto:
                 recognisableType=obj.get("recognisableType", False),
                 broken=obj.get("broken", True),
             )
-        return obj
+        raise ValueError("decode expected passed object to have a key.")
 
 
 @dataclasses.dataclass
@@ -54,22 +54,23 @@ class PluginDto:
     def print_table(self, print_modules: bool):
         """Prints table view of plugin information
         """
-        for key, value in self.__dict__.items():
+        for key, value in dataclasses.asdict(self).items():
             if key == "modules":
                 if print_modules:
                     print(f"{(key + ':'):20}")
                     for module in value:
-                        status = f"{Fore.GREEN}✓{Fore.RESET}" if module.enabled else f"{Fore.YELLOW}!{Fore.RESET}"
+                        if module.enabled:
+                            status = f"{Fore.GREEN}✓{Fore.RESET}"
+                        else:
+                            status = f"{Fore.YELLOW}!{Fore.RESET}"
                         print(f"  {status} {module.name[:20]:20} {module.key}")
-                else:
-                    pass
             else:
                 print(f"{(key + ':'):15} {value}")
 
-    @staticmethod
-    def decode(obj: dict) -> typing.Union["PluginDto", dict]:
+    @classmethod
+    def decode(cls, obj: dict) -> "PluginDto":
         if "key" in obj:
-            return PluginDto(
+            return cls(
                 key=obj.get("key"),
                 name=obj.get("name", ""),
                 version=obj.get("version", "0.0.1"),
@@ -78,7 +79,7 @@ class PluginDto:
                 description=obj.get("description", ""),
                 modules=[ModuleDto.decode(x) for x in obj.get("modules", [])],
             )
-        return obj
+        raise ValueError("decode expected passed object to have a key.")
 
 
 def get_token(base_url: furl) -> str:
@@ -92,7 +93,7 @@ def get_token(base_url: furl) -> str:
     return token
 
 
-def upload_plugin(base_url: furl, files: typing.Dict, token: str) -> typing.Tuple[int, typing.Any]:
+def upload_plugin(base_url: furl, files: typing.Dict[str, typing.BinaryIO], token: str) -> typing.Tuple[int, typing.Any]:
     """ Upload plugin
     """
     upload_url = base_url.copy()
@@ -105,7 +106,7 @@ def upload_plugin(base_url: furl, files: typing.Dict, token: str) -> typing.Tupl
     return progress, upload_response_data
 
 
-def get_current_progress(base_url: furl, previous_request) -> (int, typing.Dict):
+def get_current_progress(base_url: furl, previous_request) -> typing.Tuple[int, typing.Dict]:
     progress_url = base_url.copy()
     progress_url.set(path=previous_request["links"]["self"])
     progress_rd = requests.get(progress_url.url).json()
@@ -115,7 +116,7 @@ def get_current_progress(base_url: furl, previous_request) -> (int, typing.Dict)
     return 100, progress_rd
 
 
-def get_all_plugins(base_url: furl, user_installed: bool = True) -> typing.List["PluginDto"]:
+def get_all_plugins(base_url: furl, user_installed: bool = True) -> typing.List[PluginDto]:
     """ Gets a list of all installed plugins from the api and returns it
     If user_installed is set true (default), only user installed plugins are listed
     """
@@ -128,7 +129,7 @@ def get_all_plugins(base_url: furl, user_installed: bool = True) -> typing.List[
     return return_obj
 
 
-def get_plugin(base_url: furl, plugin_key: str) -> "PluginDto":
+def get_plugin(base_url: furl, plugin_key: str) -> PluginDto:
     """ Gets Plugin info by using the UPM_API_ENDPOINT/plugin-key/ endpoint and
     returns it as a PluginDto
     """
@@ -140,13 +141,13 @@ def get_plugin(base_url: furl, plugin_key: str) -> "PluginDto":
     return return_obj
 
 
-def enable_disable_plugin(base_url: furl, plugin_key: str, enabled: bool) -> "PluginDto":
+def enable_disable_plugin(base_url: furl, plugin_key: str, enabled: bool) -> PluginDto:
     """ Enables/Disables Plugin"""
     mod = {"enabled": enabled}
     return _modify_plugin(base_url, plugin_key, mod)
 
 
-def _modify_plugin(base_url: furl, plugin_key: str, modifications: dict) -> "PluginDto":
+def _modify_plugin(base_url: furl, plugin_key: str, modifications: dict) -> PluginDto:
     """ Puts Changes to plugin by using the UPM_API_ENDPOINT/plugin-key/ endpoint and
     returns new infos as a PluginDto
     """
@@ -166,12 +167,10 @@ def uninstall_plugin(base_url: furl, plugin_key: str) -> bool:
     request_url.add(path=UPM_API_ENDPOINT)
     request_url.join(plugin_key + "-key")
     response = requests.delete(request_url.url)
-    if response.status_code == 204:
-        return True
-    return False
+    return response.status_code == 204
 
 
-def module_status(previous_request: dict,) -> typing.Tuple[int, int, typing.List["ModuleDto"]]:
+def module_status(previous_request: dict,) -> typing.Tuple[int, int, typing.List[ModuleDto]]:
     """ Returns the module status of an plugin based on a request/dict containing an PluginDto
     returns an tuple containing
         1. number of all plugins
@@ -179,15 +178,9 @@ def module_status(previous_request: dict,) -> typing.Tuple[int, int, typing.List
         3. Array of disabled plugins
     """
     plugin_dto = PluginDto.decode(previous_request)
-    all_modules = 0
-    enabled_modules = 0
-    disabled_modules = []
-    for module in plugin_dto.modules:
-        all_modules += 1
-        if module.enabled:
-            enabled_modules += 1
-        else:
-            disabled_modules.append(module)
+    disabled_modules = [module for module in plugin_dto.modules if not module.enabled]
+    all_modules = len(plugin_dto.modules)
+    enabled_modules = all_modules - len(disabled_modules)
     return all_modules, enabled_modules, disabled_modules
 
 
@@ -196,7 +189,7 @@ def get_safemode(base_url: furl) -> bool:
     request_url.add(path=UPM_API_ENDPOINT)
     request_url.add(path="safe-mode")
     response = requests.get(request_url.url)
-    return response.json().get("enabled")
+    return response.json()["enabled"]
 
 
 def enable_disable_safemode(base_url: furl, enable: bool, keepState: bool = False) -> bool:
