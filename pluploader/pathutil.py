@@ -39,6 +39,8 @@ def get_plugin_key_from_pom() -> str:
         properties = root.find("ns:properties", namespace)
         plugin_id = properties.find("ns:atlassian.plugin.key", namespace).text
         return plugin_id
+    except FileNotFoundError as exc:
+        raise exc
     except Exception as exc:
         raise PluginKeyNotFoundError(exc)
 

@@ -232,8 +232,11 @@ def plugin_info(base_url, args):
     if plugin is None:
         try:
             plugin = pathutil.get_plugin_key_from_pom()
+        except FileNotFoundError:
+            logging.error("Could not find the plugin you want to get the info of. Are you in a maven directory?")
+            sys.exit(1)
         except pathutil.PluginKeyNotFoundError:
-            logging.error("Could not find the plugin you want to get the info of.")
+            logging.error("Could not find the plugin you want to get the info of. Is the plugin key set in the pom.xml?")
             sys.exit(1)
     try:
         info = upm.get_plugin(base_url, plugin)
@@ -251,10 +254,14 @@ def enable_plugin(base_url, args):
     """ Enables the specified plugin """
     plugin = args.plugin
     if plugin is None:
-        plugin = pathutil.get_plugin_key_from_pom()
-    if plugin is None:
-        logging.error("Could not find the plugin you want to enable.")
-        sys.exit(1)
+        try:
+            plugin = pathutil.get_plugin_key_from_pom()
+        except FileNotFoundError:
+            logging.error("Could not find the plugin you want to get the info of. Are you in a maven directory?")
+            sys.exit(1)
+        except pathutil.PluginKeyNotFoundError:
+            logging.error("Could not find the plugin you want to get the info of. Is the plugin key set in the pom.xml?")
+            sys.exit(1)
     try:
         response = upm.enable_disable_plugin(base_url, plugin, True)
     except requests.exceptions.ConnectionError:
@@ -273,8 +280,11 @@ def disable_plugin(base_url, args):
     if plugin is None:
         try:
             plugin = pathutil.get_plugin_key_from_pom()
+        except FileNotFoundError:
+            logging.error("Could not find the plugin you want to get the info of. Are you in a maven directory?")
+            sys.exit(1)
         except pathutil.PluginKeyNotFoundError:
-            logging.error("Could not find the plugin you want to get the info of.")
+            logging.error("Could not find the plugin you want to get the info of. Is the plugin key set in the pom.xml?")
             sys.exit(1)
     try:
         response = upm.enable_disable_plugin(base_url, plugin, False)
@@ -295,8 +305,11 @@ def uninstall_plugin(base_url, args):
     if plugin is None:
         try:
             plugin = pathutil.get_plugin_key_from_pom()
+        except FileNotFoundError:
+            logging.error("Could not find the plugin you want to get the info of. Are you in a maven directory?")
+            sys.exit(1)
         except pathutil.PluginKeyNotFoundError:
-            logging.error("Could not find the plugin you want to get the info of.")
+            logging.error("Could not find the plugin you want to get the info of. Is the plugin key set in the pom.xml?")
             sys.exit(1)
     try:
         status = upm.uninstall_plugin(base_url, plugin)
