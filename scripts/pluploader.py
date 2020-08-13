@@ -1,6 +1,7 @@
 """ pluploader executable
 """
 
+import getpass
 import logging
 import pathlib
 import sys
@@ -76,7 +77,7 @@ def main():
         "--user", default="admin", help="Set the username of the user you want to use. Defaults to admin",
     )
     p.add_argument(
-        "--password", default="admin", help="Set the password of the user you want to use. Defaults to admin",
+        "-p", "--password", default="admin", help="Set the password of the user you want to use. Defaults to admin",
     )
     p.add_argument(
         "--scheme", default="http", help="Set the HTTP-Scheme you want to use. Defaults to http. " "Options: http, https",
@@ -101,6 +102,9 @@ def main():
         default=False,
         action="store_true",
         help="You will be asked if you really want to upload the plugin",
+    )
+    p.add_argument(
+        "-P", "--ask-for-password", default=False, action="store_true", help="Asks user for password interactively",
     )
     p.add_argument(
         "--no-logo", default=False, action="store_true", help="the lively apps logo will not be printed",
@@ -200,7 +204,8 @@ def _base_url_from_args(args, defaults) -> furl:
 
     base_url.username = args.user
     base_url.password = args.password
-
+    if args.ask_for_password:
+        base_url.password = getpass.getpass()
     return base_url
 
 
