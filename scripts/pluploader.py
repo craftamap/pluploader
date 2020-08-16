@@ -13,10 +13,12 @@ import requests
 from colorama import Fore
 from furl import furl
 from tqdm import tqdm
+import zipfile
 
 import pluploader
 from pluploader import pathutil
 from pluploader import upmapi as upm
+from pluploader import atlas_jar_util as jar
 
 LOGO = f"""
 {Fore.YELLOW} ))))          {Fore.RED}           ((((
@@ -92,7 +94,7 @@ def main():
     p.add_argument(
         "-f",
         "--file",
-        type=configargparse.FileType("rb"),
+        type=lambda p: pathlib.Path(p),
         help="Pluploader tries find an plugin in the current directory. If you want to specify the location of the plugin you"
         "want to upload, use -f /path/to/jar",
     )
@@ -102,6 +104,9 @@ def main():
         default=False,
         action="store_true",
         help="You will be asked if you really want to upload the plugin",
+    )
+    p.add_argument(
+        "--reinstall", default=False, action="store_true", help="Plugin will be uninstalled before it will be installed",
     )
     p.add_argument(
         "-P", "--ask-for-password", default=False, action="store_true", help="Asks user for password interactively",
@@ -334,43 +339,68 @@ def uninstall_plugin(base_url, args):
 def install(base_url, args):
     """ Actual code of the pluploader
     """
-    files = {}
+    # TODO: Refactor this to somehow use "with"
     if args.file is None:
-        try:
-            plugin_path = pathutil.get_jar_path_from_pom()
-            plugin = open(plugin_path, "rb")
-            files.update({"plugin": plugin})
-        except FileNotFoundError:
-            logging.error("Could not find the plugin you want to install. Are you in a maven directory?")
-            sys.exit(1)
+        plugin_path = pathutil.get_jar_path_from_pom()
     else:
-        files.update({"plugin": args.file})
+        plugin_path = args.file
 
-    logging.info(f"{pathlib.Path((files.get('plugin').name)).name} will be uploaded to {base_url.host}:{base_url.port}")
+    logging.info(f"{plugin_path.name} will be uploaded to {base_url.host}:{base_url.port}")
+    if args.reinstall:
+        logging.info("--reinstall is enabled. The plugin will be uninstalled first.")
     if args.interactive:
         confirm = input("Do you really want to upload and install the plugin? (y/N) ")
         if confirm.lower() != "y":
             sys.exit()
+
+    if args.reinstall:
+        try:
+            plugin_key = jar.get_plugin_key_from_jar_path(plugin_path)
+            try:
+                status = upm.uninstall_plugin(base_url, plugin_key)
+            except requests.exceptions.ConnectionError:
+                logging.error("Could not connect to host - check your base-url")
+                sys.exit(1)
+            except Exception as exc:
+                logging.error("An error occured - check your credentials")
+                logging.error("%s", exc)
+                sys.exit(1)
+            if status:
+                logging.info("Plugin successfully uninstalled")
+            else:
+                logging.error("An error occurred. The plugin could not be uninstalled.")
+        except (FileNotFoundError, zipfile.BadZipFile, KeyError, pluploader.pathutil.PluginKeyNotFoundError):
+            logging.error("Could not get the plugin key of the supplied jar - are you sure you want to upload a plugin, mate?")
+
     try:
         token = upm.get_token(base_url)
     except requests.exceptions.RequestException:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
     except KeyError:
-        logging.error("UPM Token couldn't be retrieved; " "are your credentials correct?")
+        logging.error("UPM Token couldn't be retrieved; are your credentials correct?")
         sys.exit(1)
 
     try:
-        with TqdmUpTo(total=100) as pbar:
-            pbar.update_to(0)
-            progress, previous_request = upm.upload_plugin(base_url, files, token)
-            while progress != 100:
-                progress, previous_request = upm.get_current_progress(base_url, previous_request)
-                pbar.update_to(progress)
-                time.sleep(0.1)
+        with open(plugin_path, "rb") as plugin_file:
+            files = {"plugin": plugin_file}
+            with TqdmUpTo(total=100) as pbar:
+                pbar.update_to(0)
+                progress, previous_request = upm.upload_plugin(base_url, files, token)
+                while progress != 100:
+                    progress, previous_request = upm.get_current_progress(base_url, previous_request)
+                    pbar.update_to(progress)
+                    time.sleep(0.1)
     except requests.exceptions.RequestException:
         logging.error("An error occured while uploading plugin")
         sys.exit(1)
+    except FileNotFoundError:
+        logging.error("Could not find the plugin you want to install.")
+        sys.exit(1)
+    finally:
+        for file in files.values():
+            file.close()
+
     if previous_request["enabled"]:
         status = f"{Fore.GREEN}enabled{Fore.RESET}!"
     else:
