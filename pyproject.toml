@@ -13,9 +13,6 @@ packages = [
 enable = true
 style = "semver"
 
-[tool.poetry-dynamic-versioning.substitution]
-files = ["pluploader/__init__.py"]
-
 [tool.poetry.scripts]
 pluploader = 'scripts.pluploader:main'
 
