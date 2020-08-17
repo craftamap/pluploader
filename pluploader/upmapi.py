@@ -54,7 +54,7 @@ class PluginDto:
     def print_table(self, print_modules: bool):
         """Prints table view of plugin information
         """
-        for key, value in dataclasses.asdict(self).items():
+        for key, value in self.__dict__.items():
             if key == "modules":
                 if print_modules:
                     print(f"{(key + ':'):20}")
@@ -138,6 +138,7 @@ def get_plugin(base_url: furl, plugin_key: str) -> PluginDto:
     request_url.join(plugin_key + "-key")
     response = requests.get(request_url.url)
     return_obj = PluginDto.decode(response.json())
+    print(return_obj)
     return return_obj
 
 
