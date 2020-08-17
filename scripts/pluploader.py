@@ -341,7 +341,11 @@ def install(base_url, args):
     """
     # TODO: Refactor this to somehow use "with"
     if args.file is None:
-        plugin_path = pathutil.get_jar_path_from_pom()
+        try:
+            plugin_path = pathutil.get_jar_path_from_pom()
+        except FileNotFoundError:
+            logging.error("Could not find the plugin you want to install. Are you in a maven directory?")
+            sys.exit(1)
     else:
         plugin_path = args.file
 
