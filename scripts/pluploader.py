@@ -400,7 +400,7 @@ def safemode_disable(ctx: typer.Context, keep_state: bool = typer.Option(False))
         if success:
             logging.info(
                 f"Safe-mode is now {Fore.GREEN}disabled{Fore.RESET}, all plugins"
-                f"{'got restored' if not args.keep_state else 'stayed disabled'}."
+                f"{'got restored' if not keep_state else 'stayed disabled'}."
             )
         else:
             logging.error("Could not disable safe-mode - is safe-mode already disabled?")
