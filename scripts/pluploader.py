@@ -292,7 +292,7 @@ def install(
 ):
     """installs the plugin of the current maven project or a specified one; you can also omit install
     """
-    base_url = ctx.obj.get("base_url")
+    base_url: furl.furl = ctx.obj.get("base_url")
     files = {}
     if file is None:
         try:
@@ -304,8 +304,8 @@ def install(
             sys.exit(1)
     else:
         files.update({"plugin": file})
-
-    logging.info(f"{pathlib.Path((files.get('plugin').name)).name} will be uploaded to {base_url}")
+    displayed_base_url = base_url.copy().remove(username=True, password=True)
+    logging.info(f"{pathlib.Path((files.get('plugin').name)).name} will be uploaded to {displayed_base_url}")
     if interactive:
         confirm = input("Do you really want to upload and install the plugin? (y/N) ")
         if confirm.lower() != "y":
@@ -316,7 +316,7 @@ def install(
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
     except KeyError:
-        logging.error("UPM Token couldn't be retrieved; " "are your credentials correct?")
+        logging.error("UPM Token couldn't be retrieved; are your credentials correct?")
         sys.exit(1)
 
     try:
