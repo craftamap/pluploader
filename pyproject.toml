@@ -28,6 +28,8 @@ coloredlogs = "^14.0"
 packaging = "^20.4"
 importlib-metadata = "^1.7.0"
 dataclasses = {version = "*", python = "<3.7"}
+typer = "^0.3.2"
+click_default_group = "^1.2.2"
 
 [tool.poetry.dev-dependencies]
 black = "^19.10b0"
