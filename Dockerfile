@@ -1,9 +1,8 @@
-FROM python
+FROM python:3.8
 
-RUN pip3 install pluploader \
- && apt-get update \
- && apt-get install -y vim \
- && mkdir -p /workdir
+RUN mkdir /workdir
+
+RUN pip3 install pluploader
 
 WORKDIR /workdir
 
