@@ -14,6 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - name: Login to DockerHub Registry
+      run: echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
     - name: Build Container
       run: |
         docker build . -t craftamap/pluploader:${{ github.event.inputs.version }} --build-arg PL_VERSION=${{ github.event.inputs.version }}
+        docker tag . -t craftamap/pluploader:${{ github.event.inputs.version }}  craftamap/pluploader:latest
+    - name: Push the versioned Docker image
+      run: docker push craftamap/pluploader:${{ github.event.inputs.version }}
+    - name: Push the latest Docker image
+      run: docker push craftamap/pluploader:latest
