@@ -1,7 +1,13 @@
 name: Build and Upload Docker
 
 on:
-  push
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'version'
+        required: true
+
+# ${{ github.event.release.tag_name }}
 
 jobs:
   build:
@@ -10,4 +16,4 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build Container
       run: |
-        docker build . -t craftamap/pluploader:${{ github.event.release.tag_name }} --build-arg PL_VERSION=${{ github.event.release.tag_name }}
+        docker build . -t craftamap/pluploader:${{ github.event.inputs.version }} --build-arg PL_VERSION=${{ github.event.inputs.version }}
