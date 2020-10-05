@@ -9,9 +9,7 @@ on:
 
 jobs:
   deploy:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
@@ -28,3 +26,17 @@ jobs:
       run: |
         poetry config pypi-token.pypi $PYPI_TOKEN
         poetry publish --build
+  docker: 
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Login to DockerHub Registry
+      run: echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+    - name: Build Container
+      run: |
+        docker build . -t craftamap/pluploader:${{ github.event.release.tag_name }} --build-arg PL_VERSION=${{ github.event.release.tag_name }}
+        docker tag craftamap/pluploader:${{ github.event.release.tag_name }}  craftamap/pluploader:latest
+    - name: Push the versioned Docker image
+      run: docker push craftamap/pluploader:${{ github.event.inputs.version }}
+    - name: Push the latest Docker image
+      run: docker push craftamap/pluploader:latest

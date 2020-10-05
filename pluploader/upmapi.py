@@ -54,7 +54,7 @@ class PluginDto:
     def print_table(self, print_modules: bool):
         """Prints table view of plugin information
         """
-        for key, value in dataclasses.asdict(self).items():
+        for key, value in self.__dict__.items():
             if key == "modules":
                 if print_modules:
                     print(f"{(key + ':'):20}")
