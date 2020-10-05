@@ -6,7 +6,6 @@ authors = ["Fabian Siegel <fabian@livelyapps.com>"]
 license = "Apache-2.0"
 packages = [
     { include = "pluploader" },
-    { include = "scripts" },
 ]
 
 [tool.poetry-dynamic-versioning]
@@ -14,7 +13,7 @@ enable = true
 style = "semver"
 
 [tool.poetry.scripts]
-pluploader = 'scripts.pluploader:main'
+pluploader = 'pluploader.main:main'
 
 [tool.poetry.dependencies]
 python = "^3.6"

@@ -15,9 +15,9 @@ from click_default_group import DefaultGroup
 from colorama import Fore
 from tqdm import tqdm
 
-import pluploader
-from pluploader import pathutil
-from pluploader import upmapi as upm
+from . import __version__
+from . import pathutil
+from . import upmapi as upm
 
 app = typer.Typer()
 app_safemode = typer.Typer()
@@ -40,23 +40,6 @@ LOGO = f"""
 
 coloredlogs.install(level="DEBUG")
 coloredlogs.install(fmt="%(asctime)s %(levelname)s %(message)s")
-
-
-class TqdmUpTo(tqdm):
-    """Provides `update_to(n)` which uses `tqdm.update(delta_n)`."""
-
-    def update_to(self, b=1, bsize=1, tsize=None):
-        """
-        b  : int, optional
-            Number of blocks transferred so far [default: 1].
-        bsize  : int, optional
-            Size of each block (in tqdm units) [default: 1].
-        tsize  : int, optional
-            Total size (in tqdm units). If [default: None] remains unchanged.
-        """
-        if tsize is not None:
-            self.total = tsize
-        self.update(b * bsize - self.n)  # will also set self.n = b * bsize
 
 
 def main():
@@ -91,7 +74,7 @@ def main():
 
 def version_callback(value: bool):
     if value:
-        print(f"You're using {pluploader.__version__}")
+        print(f"You're using {__version__}")
         raise typer.Exit()
 
 
@@ -411,6 +394,23 @@ def safemode_disable(ctx: typer.Context, keep_state: bool = typer.Option(False))
         logging.error("An error occured - check your credentials")
         logging.error("%s", exc)
         sys.exit(1)
+
+
+class TqdmUpTo(tqdm):
+    """Provides `update_to(n)` which uses `tqdm.update(delta_n)`."""
+
+    def update_to(self, b=1, bsize=1, tsize=None):
+        """
+        b  : int, optional
+            Number of blocks transferred so far [default: 1].
+        bsize  : int, optional
+            Size of each block (in tqdm units) [default: 1].
+        tsize  : int, optional
+            Total size (in tqdm units). If [default: None] remains unchanged.
+        """
+        if tsize is not None:
+            self.total = tsize
+        self.update(b * bsize - self.n)  # will also set self.n = b * bsize
 
 
 if __name__ == "__main__":
