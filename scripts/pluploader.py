@@ -283,13 +283,16 @@ def uninstall_plugin(
 @app.command("install")
 def install(
     ctx: typer.Context,
-    file: typing.Optional[typer.FileBinaryRead] = typer.Option(None, "--file", "-f", help=""),
+    file: typing.Optional[pathlib.Path] = typer.Option(None, "--file", "-f", help=""),
     interactive: typing.Optional[bool] = typer.Option(
         False,
         "--interactive",
         "-i",
         help="Pluploader tries find an plugin in the current directory. If you want to specify the location of the plugin "
         "you want to upload, use -f /path/to/jar",
+    ),
+    reinstall: typing.Optional[bool] = typer.Option(
+        False, "--reinstall", help="Plugin will be uninstalled before it will be installed"
     ),
 ):
     """installs the plugin of the current maven project or a specified one; you can also omit install
@@ -303,7 +306,8 @@ def install(
             logging.error("Could not find the plugin you want to install. Are you in a maven directory?")
             sys.exit(1)
     else:
-        files.update({"plugin": file})
+        plugin_path = file
+
     displayed_base_url = base_url.copy().remove(username=True, password=True)
     logging.info(f"{pathlib.Path((files.get('plugin').name)).name} will be uploaded to {displayed_base_url}")
     if interactive:
@@ -311,7 +315,7 @@ def install(
         if confirm.lower() != "y":
             sys.exit()
 
-    if args.reinstall:
+    if reinstall:
         try:
             plugin_key = jar.get_plugin_key_from_jar_path(plugin_path)
             try:
