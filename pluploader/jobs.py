@@ -2,7 +2,6 @@
 """
 
 import dataclasses
-import datetime
 import typing
 
 import requests
@@ -41,6 +40,12 @@ def get_token_and_cookies(base_url: furl) -> typing.Tuple[str, requests.cookies.
 
 
 def list_jobs(base_url: furl) -> typing.Tuple[typing.List[Job], str, requests.cookies.RequestsCookieJar]:
+    """
+    Returns:
+        - list of jobs (typing.List[Job])
+        - token(str)
+        - cookies of request(requests.cookies.RequestsCookieJar)
+    """
     request_url = base_url.copy()
     request_url.add(path=LIST_JOBS_ACTION_URL)
     response = requests.get(request_url)
@@ -57,11 +62,11 @@ def list_jobs(base_url: furl) -> typing.Tuple[typing.List[Job], str, requests.co
         job_name = row["data-job-name"]
         job_group = row["data-job-group"]
         job_id = row["data-job-id"]
-        has_history = True if row.select_one(".show-history") is None else False
-        is_runnable = True if row.select_one(".run-job") is None else False
-        is_editable = True if row.select_one(".edit-schedule") is None else False
-        has_disable = True if row.select_one(".disable-job") is None else False
-        has_enable = True if row.select_one(".enable-job") is None else False
+        has_history = True if row.select_one(".show-history") is not None else False
+        is_runnable = True if row.select_one(".run-job") is not None else False
+        is_editable = True if row.select_one(".edit-schedule") is not None else False
+        has_disable = True if row.select_one(".disable-job") is not None else False
+        has_enable = True if row.select_one(".enable-job") is not None else False
 
         status = row.select("td")[headers.index("Status")].get_text()
         last_execution = row.select("td")[headers.index("Last Execution")].get_text()
@@ -97,12 +102,11 @@ def run_job(
     job: Job,
     token: typing.Optional[str] = None,
     cookies: typing.Optional[requests.cookies.RequestsCookieJar] = None,
-):
+) -> bool:
     if token is None or cookies is None:
         token, cookies = get_token_and_cookies(base_url)
     request_url = base_url.copy()
     request_url.add(path=RUN_JOB_ACTION_URL)
     request_url.add(args={"group": job.group, "id": job.id, "atl_token": token})
-    print(request_url)
     response = requests.get(request_url, cookies=cookies)
-    print(response.status_code)
+    return response.status_code == 200

@@ -2,6 +2,7 @@
 """
 import logging
 import pathlib
+import shutil
 import sys
 import time
 import typing
@@ -15,14 +16,15 @@ from click_default_group import DefaultGroup
 from colorama import Fore
 from tqdm import tqdm
 
-from . import __version__
-from . import pathutil
+from . import __version__, jobs, pathutil
 from . import upmapi as upm
 
 app = typer.Typer()
 app_safemode = typer.Typer()
+app_job = typer.Typer()
 
 app.add_typer(app_safemode, name="safe-mode")
+app.add_typer(app_job, name="job")
 
 LOGO = f"""
 {Fore.YELLOW} ))))          {Fore.RED}           ((((
@@ -394,6 +396,108 @@ def safemode_disable(ctx: typer.Context, keep_state: bool = typer.Option(False))
         logging.error("An error occured - check your credentials")
         logging.error("%s", exc)
         sys.exit(1)
+
+
+@app_job.command("list")
+def job_list(
+    ctx: typer.Context,
+    hide_default: typing.Optional[bool] = typer.Option(False),
+    print_all_infos: typing.Optional[bool] = typer.Option(False),
+):
+    """ Confluence only, list all jobs available
+    """
+    logging.info("Getting jobs... This can take some time - please wait!")
+    _job_list, token, cookies = jobs.list_jobs(ctx.obj.get("base_url"))
+    if hide_default:
+        _job_list = [x for x in _job_list if x.group != "DEFAULT"]
+
+    columns, _ = shutil.get_terminal_size(fallback=(80, 24))
+
+    width = int((columns - 17) / 4)
+    print(
+        f"{Fore.LIGHTBLACK_EX}{'idx':3} {'name':{width}} {'group':{width*2}} {'id':{width}} {'STS':3} {'RUNBL':5}{Fore.RESET}"
+    )
+    if print_all_infos:
+        print(
+            f"{Fore.LIGHTBLACK_EX}        {'last execution':{width}} {'next execution':{width}} {'avg duration':7}{Fore.RESET}"
+        )
+    for idx, job in enumerate(_job_list):
+        status_emoji = "🔄" if job.status == "Scheduled" else "❌"
+        if job.is_runnable:
+            runnable_emoji = f"{Fore.GREEN}✓{Fore.RESET}"
+        else:
+            runnable_emoji = f"{Fore.RED}!{Fore.RESET}"
+        print(
+            f"{Fore.YELLOW}{idx:3}{Fore.RESET} {job.name:{width}.{width}} {job.group:{width*2}.{width*2}}",
+            f"{job.id:{width}.{width}} {status_emoji:2.6} {runnable_emoji}",
+        )
+        if print_all_infos:
+            print(
+                f"        {job.last_execution:{width}.{width}} {job.next_execution:{width}.{width}}",
+                f"{job.avg_duration:{width}.{width}}",
+            )
+
+
+@app_job.command("run")
+def job_run(
+    ctx: typer.Context,
+    idx: typing.Optional[int] = typer.Option(None),
+    id: typing.Optional[str] = typer.Option(None),
+    group: typing.Optional[str] = typer.Option(None),
+):
+    """ Confluence only, runs a specified job
+    """
+    logging.info("Getting jobs... This can take some time - please wait!")
+    base_url = ctx.obj.get("base_url")
+    _job_list, token, cookies = jobs.list_jobs(base_url)
+
+    selected_job = None
+
+    if id is not None:
+        possible_jobs = [x for x in _job_list if id in x.id]
+        if len(possible_jobs) > 1 and group is not None:
+            possible_jobs = [x for x in possible_jobs if group in x.group]
+
+        if len(possible_jobs) == 1:
+            selected_job = possible_jobs[0]
+        elif len(possible_jobs) > 0:
+            # TODO: ADD SELECTION HERE
+            pass
+    elif idx is not None:
+        selected_job = _job_list[idx] if idx < len(_job_list) else None
+    else:
+        columns, _ = shutil.get_terminal_size(fallback=(80, 24))
+
+        width = int((columns - 15) / 4)
+        print(f"{Fore.LIGHTBLACK_EX}{'idx':3} {'name':{width}} {'group':{width*2}} {'id':{width}} runnable")
+        for idx, job in enumerate(_job_list):
+            if job.is_runnable:
+                runnable_emoji = f"{Fore.GREEN}✓{Fore.RESET}"
+            else:
+                runnable_emoji = f"{Fore.RED}!{Fore.RESET}"
+            print(
+                f"{Fore.YELLOW}{idx:3}{Fore.RESET} {job.name:{width}.{width}} {job.group:{width*2}.{width*2}}",
+                f"{job.id:{width}.{width}} {runnable_emoji}",
+            )
+
+        while True:
+            _idx = typer.prompt("Select a job index (idx)")
+            if int(_idx) >= 0 and int(_idx) < len(_job_list):
+                idx = int(_idx)
+                selected_job = _job_list[idx]
+                break
+
+    if selected_job is None:
+        logging.error("job could not be found")
+        typer.Exit(1)
+
+    logging.info(f"Job {selected_job.name} ({selected_job.id}) selected - Trying to run the job now")
+
+    success = jobs.run_job(base_url, selected_job, token, cookies)
+    if success:
+        logging.info("Started job successfully!")
+    else:
+        logging.error("Couldn't start job!")
 
 
 class TqdmUpTo(tqdm):
