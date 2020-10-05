@@ -298,7 +298,6 @@ def install(
     """installs the plugin of the current maven project or a specified one; you can also omit install
     """
     base_url: furl.furl = ctx.obj.get("base_url")
-    files = {}
     if file is None:
         try:
             plugin_path = pathutil.get_jar_path_from_pom()
@@ -309,7 +308,7 @@ def install(
         plugin_path = file
 
     displayed_base_url = base_url.copy().remove(username=True, password=True)
-    logging.info(f"{pathlib.Path((files.get('plugin').name)).name} will be uploaded to {displayed_base_url}")
+
     if interactive:
         confirm = input("Do you really want to upload and install the plugin? (y/N) ")
         if confirm.lower() != "y":
@@ -333,6 +332,8 @@ def install(
                 logging.error("An error occurred. The plugin could not be uninstalled.")
         except (FileNotFoundError, zipfile.BadZipFile, KeyError, pluploader.pathutil.PluginKeyNotFoundError):
             logging.error("Could not get the plugin key of the supplied jar - are you sure you want to upload a plugin, mate?")
+
+    logging.info(f"{pathlib.Path(plugin_path).name} will be uploaded to {displayed_base_url}")
 
     try:
         token = upm.get_token(base_url)
