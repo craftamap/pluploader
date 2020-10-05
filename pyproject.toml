@@ -34,6 +34,7 @@ click_default_group = "^1.2.2"
 [tool.poetry.dev-dependencies]
 black = "^19.10b0"
 pre-commit = "*"
+flake8 = "^3.8.4"
 
 [tool.black]
 line-length = 127
