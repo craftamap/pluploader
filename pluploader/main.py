@@ -419,6 +419,7 @@ def job_list(
         print(
             f"{Fore.LIGHTBLACK_EX}        {'last execution':{width}} {'next execution':{width}} {'avg duration':7}{Fore.RESET}"
         )
+    print(f"{Fore.LIGHTBLACK_EX}{'='*columns}{Fore.RESET}")
     for idx, job in enumerate(_job_list):
         if hide_default and job.group == "DEFAULT":
             continue
@@ -436,6 +437,7 @@ def job_list(
                 f"        {job.last_execution:{width}.{width}} {job.next_execution:{width}.{width}}",
                 f"{job.avg_duration:{width}.{width}}",
             )
+            print(f"{Fore.LIGHTBLACK_EX}{'-'*columns}{Fore.RESET}")
 
 
 def _select_job(
