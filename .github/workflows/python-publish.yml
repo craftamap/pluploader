@@ -39,6 +39,6 @@ jobs:
         docker build . -t craftamap/pluploader:${{ github.event.release.tag_name }} --build-arg PL_VERSION=${{ github.event.release.tag_name }}
         docker tag craftamap/pluploader:${{ github.event.release.tag_name }}  craftamap/pluploader:latest
     - name: Push the versioned Docker image
-      run: docker push craftamap/pluploader:${{ github.event.inputs.version }}
+      run: docker push craftamap/pluploader:${{ github.event.release.tag_name }}
     - name: Push the latest Docker image
       run: docker push craftamap/pluploader:latest
