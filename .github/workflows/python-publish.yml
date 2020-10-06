@@ -20,6 +20,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install poetry
+        pip install poetry-dynamic-versioning
     - name: Build and publish
       env:
         PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
@@ -27,6 +28,7 @@ jobs:
         poetry config pypi-token.pypi $PYPI_TOKEN
         poetry publish --build
   docker: 
+    needs: [deploy]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
