@@ -27,6 +27,9 @@ class Job:
     is_runnable: bool
     is_editable: bool
     action_enable_disable: typing.Optional[str]
+    is_cron: bool
+    cron_expression: typing.Optional[str]
+    repeat_interval: typing.Optional[str]
 
 
 def get_token_and_cookies(base_url: furl) -> typing.Tuple[str, requests.cookies.RequestsCookieJar]:
@@ -64,6 +67,9 @@ def list_jobs(base_url: furl) -> typing.Tuple[typing.List[Job], str, requests.co
         job_name = row["data-job-name"]
         job_group = row["data-job-group"]
         job_id = row["data-job-id"]
+        is_cron = row["data-is-cron"]
+        cron_expression = row["data-cron-expression"]
+        repeat_interval = row["data-repeat-interval"]
         has_history = True if row.select_one(".show-history") is not None else False
         is_runnable = True if row.select_one(".run-job") is not None else False
         is_editable = True if row.select_one(".edit-schedule") is not None else False
@@ -93,6 +99,9 @@ def list_jobs(base_url: furl) -> typing.Tuple[typing.List[Job], str, requests.co
                 is_runnable=is_runnable,
                 is_editable=is_editable,
                 action_enable_disable=action_enable_disable,
+                is_cron=is_cron,
+                cron_expression=cron_expression,
+                repeat_interval=repeat_interval,
             )
         )
 
