@@ -10,6 +10,8 @@ from furl import furl
 
 LIST_JOBS_ACTION_URL = "/admin/scheduledjobs/viewscheduledjobs.action"
 RUN_JOB_ACTION_URL = "/admin/scheduledjobs/runJob.action"
+DISABLE_JOB_ACTION_URL = "/admin/scheduledjobs/disableJob.action"
+ENABLE_JOB_ACTION_URL = "/admin/scheduledjobs/enableJob.action"
 
 
 @dataclasses.dataclass()
@@ -107,6 +109,36 @@ def run_job(
         token, cookies = get_token_and_cookies(base_url)
     request_url = base_url.copy()
     request_url.add(path=RUN_JOB_ACTION_URL)
+    request_url.add(args={"group": job.group, "id": job.id, "atl_token": token})
+    response = requests.get(request_url, cookies=cookies)
+    return response.status_code == 200
+
+
+def disable_job(
+    base_url: furl,
+    job: Job,
+    token: typing.Optional[str] = None,
+    cookies: typing.Optional[requests.cookies.RequestsCookieJar] = None,
+) -> bool:
+    if token is None or cookies is None:
+        token, cookies = get_token_and_cookies(base_url)
+    request_url = base_url.copy()
+    request_url.add(path=DISABLE_JOB_ACTION_URL)
+    request_url.add(args={"group": job.group, "id": job.id, "atl_token": token})
+    response = requests.get(request_url, cookies=cookies)
+    return response.status_code == 200
+
+
+def enable_job(
+    base_url: furl,
+    job: Job,
+    token: typing.Optional[str] = None,
+    cookies: typing.Optional[requests.cookies.RequestsCookieJar] = None,
+) -> bool:
+    if token is None or cookies is None:
+        token, cookies = get_token_and_cookies(base_url)
+    request_url = base_url.copy()
+    request_url.add(path=ENABLE_JOB_ACTION_URL)
     request_url.add(args={"group": job.group, "id": job.id, "atl_token": token})
     response = requests.get(request_url, cookies=cookies)
     return response.status_code == 200

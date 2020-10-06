@@ -408,8 +408,6 @@ def job_list(
     """
     logging.info("Getting jobs... This can take some time - please wait!")
     _job_list, token, cookies = jobs.list_jobs(ctx.obj.get("base_url"))
-    if hide_default:
-        _job_list = [x for x in _job_list if x.group != "DEFAULT"]
 
     columns, _ = shutil.get_terminal_size(fallback=(80, 24))
 
@@ -422,6 +420,8 @@ def job_list(
             f"{Fore.LIGHTBLACK_EX}        {'last execution':{width}} {'next execution':{width}} {'avg duration':7}{Fore.RESET}"
         )
     for idx, job in enumerate(_job_list):
+        if hide_default and job.group == "DEFAULT":
+            continue
         status_emoji = "🔄" if job.status == "Scheduled" else "❌"
         if job.is_runnable:
             runnable_emoji = f"{Fore.GREEN}✓{Fore.RESET}"
@@ -438,19 +438,12 @@ def job_list(
             )
 
 
-@app_job.command("run")
-def job_run(
-    ctx: typer.Context,
-    idx: typing.Optional[int] = typer.Option(None),
-    id: typing.Optional[str] = typer.Option(None),
-    group: typing.Optional[str] = typer.Option(None),
-):
-    """ Confluence only, runs a specified job
-    """
-    logging.info("Getting jobs... This can take some time - please wait!")
-    base_url = ctx.obj.get("base_url")
-    _job_list, token, cookies = jobs.list_jobs(base_url)
-
+def _select_job(
+    _job_list: typing.List[jobs.Job],
+    idx: typing.Optional[int] = None,
+    id: typing.Optional[str] = None,
+    group: typing.Optional[str] = None,
+) -> jobs.Job:
     selected_job = None
 
     if id is not None:
@@ -491,6 +484,24 @@ def job_run(
         logging.error("job could not be found")
         typer.Exit(1)
 
+    return selected_job
+
+
+@app_job.command("run")
+def job_run(
+    ctx: typer.Context,
+    idx: typing.Optional[int] = typer.Option(None),
+    id: typing.Optional[str] = typer.Option(None),
+    group: typing.Optional[str] = typer.Option(None),
+):
+    """ Confluence only, runs a specified job
+    """
+    logging.info("Getting jobs... This can take some time - please wait!")
+    base_url = ctx.obj.get("base_url")
+    _job_list, token, cookies = jobs.list_jobs(base_url)
+
+    selected_job = _select_job(_job_list, idx, id, group)
+
     logging.info(f"Job {selected_job.name} ({selected_job.id}) selected - Trying to run the job now")
 
     success = jobs.run_job(base_url, selected_job, token, cookies)
@@ -498,6 +509,70 @@ def job_run(
         logging.info("Started job successfully!")
     else:
         logging.error("Couldn't start job!")
+
+
+@app_job.command("info")
+def job_info(
+    ctx: typer.Context,
+    idx: typing.Optional[int] = typer.Option(None),
+    id: typing.Optional[str] = typer.Option(None),
+    group: typing.Optional[str] = typer.Option(None),
+):
+    logging.info("Getting jobs... This can take some time - please wait!")
+    base_url = ctx.obj.get("base_url")
+    _job_list, token, cookies = jobs.list_jobs(base_url)
+
+    selected_job = _select_job(_job_list, idx, id, group)
+    for key, value in selected_job.__dict__.items():
+        print(f"{(key.replace('_', ' ') + ':'):25.25} {value}")
+
+
+@app_job.command("disable")
+def job_disable(
+    ctx: typer.Context,
+    idx: typing.Optional[int] = typer.Option(None),
+    id: typing.Optional[str] = typer.Option(None),
+    group: typing.Optional[str] = typer.Option(None),
+):
+    """ Confluence only, disable a specified job
+    """
+    logging.info("Getting jobs... This can take some time - please wait!")
+    base_url = ctx.obj.get("base_url")
+    _job_list, token, cookies = jobs.list_jobs(base_url)
+
+    selected_job = _select_job(_job_list, idx, id, group)
+
+    logging.info(f"Job {selected_job.name} ({selected_job.id}) selected - Trying to disable the job now")
+
+    success = jobs.disable_job(base_url, selected_job, token, cookies)
+    if success:
+        logging.info("Disabled job successfully!")
+    else:
+        logging.error("Couldn't disable job!")
+
+
+@app_job.command("enable")
+def job_enable(
+    ctx: typer.Context,
+    idx: typing.Optional[int] = typer.Option(None),
+    id: typing.Optional[str] = typer.Option(None),
+    group: typing.Optional[str] = typer.Option(None),
+):
+    """ Confluence only, enable a specified job
+    """
+    logging.info("Getting jobs... This can take some time - please wait!")
+    base_url = ctx.obj.get("base_url")
+    _job_list, token, cookies = jobs.list_jobs(base_url)
+
+    selected_job = _select_job(_job_list, idx, id, group)
+
+    logging.info(f"Job {selected_job.name} ({selected_job.id}) selected - Trying to enable the job now")
+
+    success = jobs.enable_job(base_url, selected_job, token, cookies)
+    if success:
+        logging.info("Enabled job successfully!")
+    else:
+        logging.error("Couldn't enable job!")
 
 
 class TqdmUpTo(tqdm):
