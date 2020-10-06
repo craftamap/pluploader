@@ -440,38 +440,46 @@ def job_list(
 ):
     """ Confluence only, list all jobs available
     """
-    logging.info("Getting jobs... This can take some time - please wait!")
-    _job_list, token, cookies = jobs.list_jobs(ctx.obj.get("base_url"))
+    try:
+        logging.info("Getting jobs... This can take some time - please wait!")
+        _job_list, token, cookies = jobs.list_jobs(ctx.obj.get("base_url"))
 
-    columns, _ = shutil.get_terminal_size(fallback=(80, 24))
+        columns, _ = shutil.get_terminal_size(fallback=(80, 24))
 
-    width = int((columns - 17) / 4)
-    print(
-        f"{Fore.LIGHTBLACK_EX}{'idx':3} {'name':{width}} {'group':{width*2}} {'id':{width}} {'STS':3} {'RUNBL':5}{Fore.RESET}"
-    )
-    if print_all_infos:
+        width = int((columns - 17) / 4)
         print(
-            f"{Fore.LIGHTBLACK_EX}        {'last execution':{width}} {'next execution':{width}} {'avg duration':7}{Fore.RESET}"
-        )
-    print(f"{Fore.LIGHTBLACK_EX}{'='*columns}{Fore.RESET}")
-    for idx, job in enumerate(_job_list):
-        if hide_default and job.group == "DEFAULT":
-            continue
-        status_emoji = "🔄" if job.status == "Scheduled" else "❌"
-        if job.is_runnable:
-            runnable_emoji = f"{Fore.GREEN}✓{Fore.RESET}"
-        else:
-            runnable_emoji = f"{Fore.RED}!{Fore.RESET}"
-        print(
-            f"{Fore.YELLOW}{idx:3}{Fore.RESET} {job.name:{width}.{width}} {job.group:{width*2}.{width*2}}",
-            f"{job.id:{width}.{width}} {status_emoji:2.6} {runnable_emoji}",
+            f"{Fore.LIGHTBLACK_EX}{'idx':3} {'name':{width}} {'group':{width*2}} {'id':{width}} {'STS':3} {'RUNBL':5}{Fore.RESET}"
         )
         if print_all_infos:
             print(
-                f"        {job.last_execution:{width}.{width}} {job.next_execution:{width}.{width}}",
-                f"{job.avg_duration:{width}.{width}}",
+                f"{Fore.LIGHTBLACK_EX}        {'last execution':{width}} {'next execution':{width}} {'avg duration':7}{Fore.RESET}"
             )
-            print(f"{Fore.LIGHTBLACK_EX}{'-'*columns}{Fore.RESET}")
+        print(f"{Fore.LIGHTBLACK_EX}{'='*columns}{Fore.RESET}")
+        for idx, job in enumerate(_job_list):
+            if hide_default and job.group == "DEFAULT":
+                continue
+            status_emoji = "🔄" if job.status == "Scheduled" else "❌"
+            if job.is_runnable:
+                runnable_emoji = f"{Fore.GREEN}✓{Fore.RESET}"
+            else:
+                runnable_emoji = f"{Fore.RED}!{Fore.RESET}"
+            print(
+                f"{Fore.YELLOW}{idx:3}{Fore.RESET} {job.name:{width}.{width}} {job.group:{width*2}.{width*2}}",
+                f"{job.id:{width}.{width}} {status_emoji:2.6} {runnable_emoji}",
+            )
+            if print_all_infos:
+                print(
+                    f"        {job.last_execution:{width}.{width}} {job.next_execution:{width}.{width}}",
+                    f"{job.avg_duration:{width}.{width}}",
+                )
+                print(f"{Fore.LIGHTBLACK_EX}{'-'*columns}{Fore.RESET}")
+    except requests.exceptions.ConnectionError:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except Exception as exc:
+        logging.error("An error occured - check your credentials")
+        logging.error("%s", exc)
+        sys.exit(1)
 
 
 def _select_job(
@@ -532,19 +540,28 @@ def job_run(
 ):
     """ Confluence only, runs a specified job
     """
-    logging.info("Getting jobs... This can take some time - please wait!")
-    base_url = ctx.obj.get("base_url")
-    _job_list, token, cookies = jobs.list_jobs(base_url)
+    try:
+        logging.info("Getting jobs... This can take some time - please wait!")
+        base_url = ctx.obj.get("base_url")
+        _job_list, token, cookies = jobs.list_jobs(base_url)
 
-    selected_job = _select_job(_job_list, idx, id, group)
+        selected_job = _select_job(_job_list, idx, id, group)
 
-    logging.info(f"Job {selected_job.name} ({selected_job.id}) selected - Trying to run the job now")
+        logging.info(f"Job {selected_job.name} ({selected_job.id}) selected - Trying to run the job now")
 
-    success = jobs.run_job(base_url, selected_job, token, cookies)
-    if success:
-        logging.info("Started job successfully!")
-    else:
-        logging.error("Couldn't start job!")
+        success = jobs.run_job(base_url, selected_job, token, cookies)
+        if success:
+            logging.info("Started job successfully!")
+        else:
+            logging.error("Couldn't start job!")
+
+    except requests.exceptions.ConnectionError:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except Exception as exc:
+        logging.error("An error occured - check your credentials")
+        logging.error("%s", exc)
+        sys.exit(1)
 
 
 @app_job.command("info")
@@ -554,13 +571,21 @@ def job_info(
     id: typing.Optional[str] = typer.Option(None),
     group: typing.Optional[str] = typer.Option(None),
 ):
-    logging.info("Getting jobs... This can take some time - please wait!")
-    base_url = ctx.obj.get("base_url")
-    _job_list, token, cookies = jobs.list_jobs(base_url)
+    try:
+        logging.info("Getting jobs... This can take some time - please wait!")
+        base_url = ctx.obj.get("base_url")
+        _job_list, token, cookies = jobs.list_jobs(base_url)
 
-    selected_job = _select_job(_job_list, idx, id, group)
-    for key, value in selected_job.__dict__.items():
-        print(f"{(key.replace('_', ' ') + ':'):25.25} {value}")
+        selected_job = _select_job(_job_list, idx, id, group)
+        for key, value in selected_job.__dict__.items():
+            print(f"{(key.replace('_', ' ') + ':'):25.25} {value}")
+    except requests.exceptions.ConnectionError:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except Exception as exc:
+        logging.error("An error occured - check your credentials")
+        logging.error("%s", exc)
+        sys.exit(1)
 
 
 @app_job.command("disable")
@@ -572,19 +597,27 @@ def job_disable(
 ):
     """ Confluence only, disable a specified job
     """
-    logging.info("Getting jobs... This can take some time - please wait!")
-    base_url = ctx.obj.get("base_url")
-    _job_list, token, cookies = jobs.list_jobs(base_url)
+    try:
+        logging.info("Getting jobs... This can take some time - please wait!")
+        base_url = ctx.obj.get("base_url")
+        _job_list, token, cookies = jobs.list_jobs(base_url)
 
-    selected_job = _select_job(_job_list, idx, id, group)
+        selected_job = _select_job(_job_list, idx, id, group)
 
-    logging.info(f"Job {selected_job.name} ({selected_job.id}) selected - Trying to disable the job now")
+        logging.info(f"Job {selected_job.name} ({selected_job.id}) selected - Trying to disable the job now")
 
-    success = jobs.disable_job(base_url, selected_job, token, cookies)
-    if success:
-        logging.info("Disabled job successfully!")
-    else:
-        logging.error("Couldn't disable job!")
+        success = jobs.disable_job(base_url, selected_job, token, cookies)
+        if success:
+            logging.info("Disabled job successfully!")
+        else:
+            logging.error("Couldn't disable job!")
+    except requests.exceptions.ConnectionError:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except Exception as exc:
+        logging.error("An error occured - check your credentials")
+        logging.error("%s", exc)
+        sys.exit(1)
 
 
 @app_job.command("enable")
@@ -596,19 +629,27 @@ def job_enable(
 ):
     """ Confluence only, enable a specified job
     """
-    logging.info("Getting jobs... This can take some time - please wait!")
-    base_url = ctx.obj.get("base_url")
-    _job_list, token, cookies = jobs.list_jobs(base_url)
+    try:
+        logging.info("Getting jobs... This can take some time - please wait!")
+        base_url = ctx.obj.get("base_url")
+        _job_list, token, cookies = jobs.list_jobs(base_url)
 
-    selected_job = _select_job(_job_list, idx, id, group)
+        selected_job = _select_job(_job_list, idx, id, group)
 
-    logging.info(f"Job {selected_job.name} ({selected_job.id}) selected - Trying to enable the job now")
+        logging.info(f"Job {selected_job.name} ({selected_job.id}) selected - Trying to enable the job now")
 
-    success = jobs.enable_job(base_url, selected_job, token, cookies)
-    if success:
-        logging.info("Enabled job successfully!")
-    else:
-        logging.error("Couldn't enable job!")
+        success = jobs.enable_job(base_url, selected_job, token, cookies)
+        if success:
+            logging.info("Enabled job successfully!")
+        else:
+            logging.error("Couldn't enable job!")
+    except requests.exceptions.ConnectionError:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except Exception as exc:
+        logging.error("An error occured - check your credentials")
+        logging.error("%s", exc)
+        sys.exit(1)
 
 
 class TqdmUpTo(tqdm):
