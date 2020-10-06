@@ -412,7 +412,7 @@ def safemode_enable(ctx: typer.Context):
         sys.exit(1)
 
 
-@app_safemode.command("enable")
+@app_safemode.command("disable")
 def safemode_disable(ctx: typer.Context, keep_state: bool = typer.Option(False)):
     try:
         success = upm.enable_disable_safemode(ctx.obj.get("base_url"), False, keep_state)
