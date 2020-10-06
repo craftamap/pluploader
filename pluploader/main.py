@@ -15,8 +15,10 @@ import yaml
 from click_default_group import DefaultGroup
 from colorama import Fore
 from tqdm import tqdm
+import zipfile
 
 from . import __version__, jobs, pathutil
+from . import atlas_jar_util as jar
 from . import upmapi as upm
 
 app = typer.Typer()
@@ -266,7 +268,7 @@ def uninstall_plugin(
 @app.command("install")
 def install(
     ctx: typer.Context,
-    file: typing.Optional[typer.FileBinaryRead] = typer.Option(None, "--file", "-f", help=""),
+    file: typing.Optional[pathlib.Path] = typer.Option(None, "--file", "-f", help=""),
     interactive: typing.Optional[bool] = typer.Option(
         False,
         "--interactive",
@@ -274,27 +276,50 @@ def install(
         help="Pluploader tries find an plugin in the current directory. If you want to specify the location of the plugin "
         "you want to upload, use -f /path/to/jar",
     ),
+    reinstall: typing.Optional[bool] = typer.Option(
+        False, "--reinstall", help="Plugin will be uninstalled before it will be installed"
+    ),
 ):
     """installs the plugin of the current maven project or a specified one; you can also omit install
     """
     base_url: furl.furl = ctx.obj.get("base_url")
-    files = {}
     if file is None:
         try:
             plugin_path = pathutil.get_jar_path_from_pom()
-            plugin = open(plugin_path, "rb")
-            files.update({"plugin": plugin})
         except FileNotFoundError:
             logging.error("Could not find the plugin you want to install. Are you in a maven directory?")
             sys.exit(1)
     else:
-        files.update({"plugin": file})
+        plugin_path = file
+
     displayed_base_url = base_url.copy().remove(username=True, password=True)
-    logging.info(f"{pathlib.Path((files.get('plugin').name)).name} will be uploaded to {displayed_base_url}")
+
     if interactive:
         confirm = input("Do you really want to upload and install the plugin? (y/N) ")
         if confirm.lower() != "y":
             sys.exit()
+
+    if reinstall:
+        try:
+            plugin_key = jar.get_plugin_key_from_jar_path(plugin_path)
+            try:
+                status = upm.uninstall_plugin(base_url, plugin_key)
+            except requests.exceptions.ConnectionError:
+                logging.error("Could not connect to host - check your base-url")
+                sys.exit(1)
+            except Exception as exc:
+                logging.error("An error occured - check your credentials")
+                logging.error("%s", exc)
+                sys.exit(1)
+            if status:
+                logging.info("Plugin successfully uninstalled")
+            else:
+                logging.error("An error occurred. The plugin could not be uninstalled.")
+        except (FileNotFoundError, zipfile.BadZipFile, KeyError, pathutil.PluginKeyNotFoundError):
+            logging.error("Could not get the plugin key of the supplied jar - are you sure you want to upload a plugin, mate?")
+
+    logging.info(f"{pathlib.Path(plugin_path).name} will be uploaded to {displayed_base_url}")
+
     try:
         token = upm.get_token(base_url)
     except requests.exceptions.RequestException:
@@ -305,16 +330,25 @@ def install(
         sys.exit(1)
 
     try:
-        with TqdmUpTo(total=100) as pbar:
-            pbar.update_to(0)
-            progress, previous_request = upm.upload_plugin(base_url, files, token)
-            while progress != 100:
-                progress, previous_request = upm.get_current_progress(base_url, previous_request)
-                pbar.update_to(progress)
-                time.sleep(0.1)
+        with open(plugin_path, "rb") as plugin_file:
+            files = {"plugin": plugin_file}
+            with TqdmUpTo(total=100) as pbar:
+                pbar.update_to(0)
+                progress, previous_request = upm.upload_plugin(base_url, files, token)
+                while progress != 100:
+                    progress, previous_request = upm.get_current_progress(base_url, previous_request)
+                    pbar.update_to(progress)
+                    time.sleep(0.1)
     except requests.exceptions.RequestException:
         logging.error("An error occured while uploading plugin")
         sys.exit(1)
+    except FileNotFoundError:
+        logging.error("Could not find the plugin you want to install.")
+        sys.exit(1)
+    finally:
+        for file in files.values():
+            file.close()
+
     if previous_request["enabled"]:
         status = f"{Fore.GREEN}enabled{Fore.RESET}!"
     else:
