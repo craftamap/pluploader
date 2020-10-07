@@ -5,7 +5,7 @@ server applications.
 import pathlib
 from zipfile import ZipFile
 from bs4 import BeautifulSoup
-from pluploader.pathutil import PluginKeyNotFoundError
+from .pathutil import PluginKeyNotFoundError
 
 
 def _get_atlassian_plugin_xml_from_jar_path(path: pathlib.Path) -> str:
