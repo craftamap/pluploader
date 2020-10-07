@@ -17,9 +17,10 @@ from colorama import Fore
 from tqdm import tqdm
 import zipfile
 
-from . import __version__, jobs, pathutil
-from . import atlas_jar_util as jar
-from . import upmapi as upm
+from . import __version__
+from .confluence.jobs import jobs
+from .util import atlassian_jar as jar, pathutil
+from .upm import upmapi as upm
 
 app = typer.Typer()
 app_safemode = typer.Typer()
