@@ -16,7 +16,7 @@ class MpacAppVersionNotFoundError(ValueError):
     pass
 
 
-def download_link_by_marketplace_id(marketplace_id: int, version: str = "latest") -> furl:
+def download_link_by_marketplace_id(marketplace_id: str, version: str = "latest") -> furl:
     response = requests.get(VERSION_HISTORY_URL.format(marketplace_id))
     soup = BeautifulSoup(response.content, "html5lib")
 

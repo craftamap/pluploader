@@ -1,6 +1,7 @@
 import os
 import pathlib
 import tempfile
+import typing
 
 import requests
 from furl import furl
@@ -33,6 +34,18 @@ def download_app_by_app_key(app_key: str, version: str = "latest") -> os.PathLik
     return _download_file_to_tmp_dir(download_link)
 
 
-def download_app_by_marketplace_id(marketplace_id: int, version: str = "latest") -> os.PathLike:
+def download_app_by_marketplace_id(marketplace_id: str, version: str = "latest") -> os.PathLike:
     download_link = scraper.download_link_by_marketplace_id(marketplace_id, version)
     return _download_file_to_tmp_dir(download_link)
+
+
+def split_name_and_version(input: str) -> typing.Tuple[str, typing.Optional[str]]:
+    split = input.split("==")
+    version = None
+    if len(split) == 1:
+        name = split[0]
+    elif len(split) == 2 and split[1].strip() == "":
+        name = split[0]
+    else:
+        name, version = split
+    return name, version

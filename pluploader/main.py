@@ -22,6 +22,7 @@ from .safemode import app_safemode
 from .upm import upmapi as upm
 from .util import atlassian_jar as jar
 from .util import pathutil
+from .mpac import download
 
 app = typer.Typer()
 
@@ -269,6 +270,8 @@ def uninstall_plugin(
 def install(
     ctx: typer.Context,
     file: typing.Optional[pathlib.Path] = typer.Option(None, "--file", "-f", help=""),
+    mpac_id: typing.Optional[str] = typer.Option(None, "--mpac-id"),
+    mpac_key: typing.Optional[str] = typer.Option(None, "--mpac-key"),
     interactive: typing.Optional[bool] = typer.Option(
         False,
         "--interactive",
@@ -283,14 +286,27 @@ def install(
     """installs the plugin of the current maven project or a specified one; you can also omit install
     """
     base_url: furl.furl = ctx.obj.get("base_url")
-    if file is None:
+    if file is not None:
+        plugin_path = file
+    elif mpac_id is not None:
+        id, version = download.split_name_and_version(mpac_id)
+        plugin_path = download.download_app_by_marketplace_id(id, version)
+        print(plugin_path)
+    elif mpac_key is not None:
+        key, version = download.split_name_and_version(mpac_key)
+        print(key, version)
+        if version is None:
+            plugin_path = download.download_app_by_app_key(key)
+        else:
+            plugin_path = download.download_app_by_app_key(key, version)
+
+        print(plugin_path)
+    else:
         try:
             plugin_path = pathutil.get_jar_path_from_pom()
         except FileNotFoundError:
             logging.error("Could not find the plugin you want to install. Are you in a maven directory?")
             sys.exit(1)
-    else:
-        plugin_path = file
 
     displayed_base_url = base_url.copy().remove(username=True, password=True)
 
