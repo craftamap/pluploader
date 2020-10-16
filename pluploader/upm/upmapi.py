@@ -84,6 +84,7 @@ class PluginDto:
 
 @dataclasses.dataclass()
 class License:
+    plugin_key: str
     valid: bool
     error: typing.Optional[str]
     evaluation: bool
@@ -91,13 +92,14 @@ class License:
     maximum_number_of_users: typing.Optional[int]
     license_type: str
     expiry_date: typing.Optional[int]
-    raw_license: int
+    raw_license: typing.Optional[str]
     active: typing.Optional[bool]
 
     @classmethod
     def decode(cls, obj: dict) -> "License":
-        if "rawLicense" in obj:
+        if "valid" in obj:
             return cls(
+                plugin_key=obj.get("pluginKey"),
                 valid=obj.get("valid"),
                 error=obj.get("error", None),
                 evaluation=obj.get("evaluation"),
