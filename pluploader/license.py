@@ -81,12 +81,10 @@ def update(
         try:
             plugin = pathutil.get_plugin_key_from_pom()
         except FileNotFoundError:
-            logging.error("Could not find the plugin you want to get the license info of. Are you in a maven directory?")
+            logging.error("Could not find the plugin you want to update the license of. Are you in a maven directory?")
             sys.exit(1)
         except pathutil.PluginKeyNotFoundError:
-            logging.error(
-                "Could not find the plugin you want to get the license info of. Is the plugin key set in the pom.xml?"
-            )
+            logging.error("Could not find the plugin you want to update the license of. Is the plugin key set in the pom.xml?")
             sys.exit(1)
     try:
         license = upm.update_license(ctx.obj.get("base_url"), plugin, license)
@@ -101,6 +99,36 @@ def update(
         print(f"{(key.replace('_', ' ') + ':'):25.25} {value}")
 
 
+@app_license.command("delete")
+def delete(
+    ctx: typer.Context, plugin: str = typer.Argument(None, help="the plugin key"),
+):
+    if plugin is None:
+        try:
+            plugin = pathutil.get_plugin_key_from_pom()
+        except FileNotFoundError:
+            logging.error("Could not find the plugin you want to delete the license of. Are you in a maven directory?")
+            sys.exit(1)
+        except pathutil.PluginKeyNotFoundError:
+            logging.error("Could not find the plugin you want to delete the licence of. Is the plugin key set in the pom.xml?")
+            sys.exit(1)
+    try:
+        license = upm.delete_license(ctx.obj.get("base_url"), plugin)
+    except requests.exceptions.ConnectionError:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except Exception as exc:
+        logging.error("An error occured - check your credentials")
+        logging.error("%s", exc)
+        sys.exit(1)
+    for key, value in license.__dict__.items():
+        print(f"{(key.replace('_', ' ') + ':'):25.25} {value}")
+    logging.warn(
+        "When the delete command is run, the old license is shown. Please run pluploader license info to ensure that"
+        " removing the license was successful."
+    )
+
+
 @app_license.command("timebomb")
 def timebomb(
     ctx: typer.Context,
@@ -111,12 +139,10 @@ def timebomb(
         try:
             plugin = pathutil.get_plugin_key_from_pom()
         except FileNotFoundError:
-            logging.error("Could not find the plugin you want to get the license info of. Are you in a maven directory?")
+            logging.error("Could not find the plugin you want to update the license of. Are you in a maven directory?")
             sys.exit(1)
         except pathutil.PluginKeyNotFoundError:
-            logging.error(
-                "Could not find the plugin you want to get the license info of. Is the plugin key set in the pom.xml?"
-            )
+            logging.error("Could not find the plugin you want to update the license of. Is the plugin key set in the pom.xml?")
             sys.exit(1)
     try:
         license = upm.update_license(ctx.obj.get("base_url"), plugin, timebomb_licenses[timebomb])

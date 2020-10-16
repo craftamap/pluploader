@@ -259,3 +259,12 @@ def update_license(base_url: furl, plugin_key: str, raw_license: str):
         return License.decode(response.json())
     except Exception:
         raise ValueError(response.status_code, response.content)
+
+
+def delete_license(base_url: furl, plugin_key: str):
+    request_url = base_url.copy()
+    request_url.add(path=UPM_API_ENDPOINT)
+    request_url.add(path=plugin_key + "-key")
+    request_url.add(path="license")
+    response = requests.delete(request_url.url)
+    return License.decode(response.json())
