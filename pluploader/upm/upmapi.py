@@ -38,7 +38,7 @@ class ModuleDto:
         raise ValueError("decode expected passed object to have a key.")
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass()
 class PluginDto:
     """ This class represents a plugin given by the UPM/Plugin API
     """
@@ -80,6 +80,35 @@ class PluginDto:
                 modules=[ModuleDto.decode(x) for x in obj.get("modules", [])],
             )
         raise ValueError("decode expected passed object to have a key.")
+
+
+@dataclasses.dataclass()
+class License:
+    valid: bool
+    error: typing.Optional[str]
+    evaluation: bool
+    nearly_expired: bool
+    maximum_number_of_users: typing.Optional[int]
+    license_type: str
+    expiry_date: typing.Optional[int]
+    raw_license: int
+    active: typing.Optional[bool]
+
+    @classmethod
+    def decode(cls, obj: dict) -> "License":
+        if "rawLicense" in obj:
+            return cls(
+                valid=obj.get("valid"),
+                error=obj.get("error", None),
+                evaluation=obj.get("evaluation"),
+                nearly_expired=obj.get("nearlyExpired"),
+                maximum_number_of_users=obj.get("maximumNumberOfUsers", None),
+                license_type=obj.get("licenseType"),
+                expiry_date=obj.get("expiryDate", None),
+                raw_license=obj.get("rawLicense"),
+                active=obj.get("active", None),
+            )
+        raise ValueError('decode expected passed object to have a "rawLicense" field.')
 
 
 def get_token(base_url: furl) -> str:
@@ -206,3 +235,25 @@ def enable_disable_safemode(base_url: furl, enable: bool, keepState: bool = Fals
     response = requests.put(request_url.url, headers=headers, json=data)
     response_json = response.json()
     return "subCode" not in response_json and response_json["enabled"] == enable
+
+
+def get_license(base_url: furl, plugin_key: str) -> License:
+    request_url = base_url.copy()
+    request_url.add(path=UPM_API_ENDPOINT)
+    request_url.add(path=plugin_key + "-key")
+    request_url.add(path="license")
+    response = requests.get(request_url.url)
+    return License.decode(response.json())
+
+
+def update_license(base_url: furl, plugin_key: str, raw_license: str):
+    request_url = base_url.copy()
+    request_url.add(path=UPM_API_ENDPOINT)
+    request_url.add(path=plugin_key + "-key")
+    request_url.add(path="license")
+    headers = {"Content-Type": "application/vnd.atl.plugins+json"}
+    try:
+        response = requests.put(request_url.url, json={"rawLicense": raw_license}, headers=headers)
+        return License.decode(response.json())
+    except Exception:
+        raise ValueError(response.status_code, response.content)
