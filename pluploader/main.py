@@ -18,6 +18,7 @@ from tqdm import tqdm
 
 from . import __version__
 from .job import app_job
+from .license import app_license
 from .safemode import app_safemode
 from .upm import upmapi as upm
 from .util import atlassian_jar as jar
@@ -27,6 +28,7 @@ app = typer.Typer()
 
 app.add_typer(app_safemode, name="safe-mode")
 app.add_typer(app_job, name="job")
+app.add_typer(app_license, name="license")
 
 LOGO = f"""
 {Fore.YELLOW} ))))          {Fore.RED}           ((((
@@ -60,6 +62,10 @@ def main():
             config_locations.append(project_cfg)
     except FileNotFoundError:
         pass
+    pwd_cfg = pathlib.Path(".") / ".pluprc"
+    if pwd_cfg.exists():
+        config_locations.append(pwd_cfg)
+
     settings = {}
 
     for config_location in config_locations:

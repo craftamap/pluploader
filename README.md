@@ -37,6 +37,8 @@ docker run -v "$(pwd)":/workdir -it craftamap/pluploader:v0.4.1
 ## Usage
 For a in-depth explanation, see `pluploader --help`
 
+> ℹ This documentation describes the master branch, and not (necessarily) the latest release.
+
 ### Global Options
 
 You can specify various global options:
@@ -129,6 +131,45 @@ And
 pluploader safe-mode disable
 # OR
 pluploader safe-mode disable --keep-state
+```
+
+### Licenses (Beta)
+
+You can also use the pluploader to get and set licenses for your plugins.
+
+To get the current license information:
+
+```
+pluploader license info com.example.plugin.key
+```
+
+To set a lciense, use the `update` functionality.
+
+```bash
+pluploader license update com.example.plugin.key --license "AAA..."
+```
+
+> ℹ Pro tip: Use `xargs` to read a license from a file by using
+> 
+> ```bash
+> cat license.txt | xargs pluploader license update --license 
+> ```
+
+You can also apply [timebomb licenses](https://developer.atlassian.com/platform/marketplace/timebomb-licenses-for-testing-server-apps/)
+
+by using
+
+```bash
+pluploader license timebomb com.example.plugin.key --timebomb threehours 
+```
+
+You can choose between 3 hours (threehours), 60 seconds (sixtyseconds) and
+10 seconds (tenseconds)
+
+To remove an applied license, you can use:
+
+```bash
+pluploader license delete com.example.plugin.key 
 ```
 
 ### Scheduled Jobs (Confluence - Experimental)
