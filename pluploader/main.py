@@ -23,6 +23,8 @@ from .safemode import app_safemode
 from .upm import upmapi as upm
 from .util import atlassian_jar as jar
 from .util import pathutil
+from .mpac import download
+from .mpac.extensions import MpacAppNotFoundError, MpacAppVersionNotFoundError
 
 app = typer.Typer()
 
@@ -274,14 +276,30 @@ def uninstall_plugin(
 @app.command("install")
 def install(
     ctx: typer.Context,
-    file: typing.Optional[pathlib.Path] = typer.Option(None, "--file", "-f", help=""),
-    interactive: typing.Optional[bool] = typer.Option(
-        False,
-        "--interactive",
-        "-i",
-        help="Pluploader tries find an plugin in the current directory. If you want to specify the location of the plugin "
-        "you want to upload, use -f /path/to/jar",
+    file: typing.Optional[pathlib.Path] = typer.Option(
+        None,
+        "--file",
+        "-f",
+        help="pluploader tries find an plugin in the current directory. If you want to specify the location of the plugin you "
+        "want to upload, use -f /path/to/jar",
     ),
+    mpac_id: typing.Optional[str] = typer.Option(
+        None,
+        "--mpac-id",
+        help="""When mpac-id is specified, pluploader tries to download the specified plugin from the marketplace.\n
+The marketplace id can be found in the url: 1213057 in https://marketplace.atlassian.com/apps/1213057\n
+To specify the version, use the == syntax: 1213057==3.10.1 will download 3.10.1\n
+Warning: mpac-id is considered unstable; consider using --mpac-key
+""",
+    ),
+    mpac_key: typing.Optional[str] = typer.Option(
+        None,
+        "--mpac-key",
+        help="""When mpac-key is specified, pluploader tries to download the specified plugin from the marketplace.
+The mpac-key is the app key.\n
+To specify the version, use the == syntax: 1213057==3.10.1 will download 3.10.1""",
+    ),
+    interactive: typing.Optional[bool] = typer.Option(False, "--interactive", "-i", help="confirm the upload of the app",),
     reinstall: typing.Optional[bool] = typer.Option(
         False, "--reinstall", help="Plugin will be uninstalled before it will be installed"
     ),
@@ -289,14 +307,31 @@ def install(
     """installs the plugin of the current maven project or a specified one; you can also omit install
     """
     base_url: furl.furl = ctx.obj.get("base_url")
-    if file is None:
-        try:
-            plugin_path = pathutil.get_jar_path_from_pom()
-        except FileNotFoundError:
-            logging.error("Could not find the plugin you want to install. Are you in a maven directory?")
-            sys.exit(1)
-    else:
-        plugin_path = file
+    try:
+        if file is not None:
+            plugin_path = file
+        elif mpac_id is not None:
+            id, version = download.split_name_and_version(mpac_id)
+            logging.info("Downloading app %s (%s)...", id, version)
+            plugin_path = download.download_app_by_marketplace_id(id, version)
+            logging.info("Successfully downloaded app to %s", plugin_path)
+        elif mpac_key is not None:
+            key, version = download.split_name_and_version(mpac_key)
+            logging.info("Downloading app %s (%s)...", key, version)
+            plugin_path = download.download_app_by_app_key(key, version)
+            logging.info("Successfully downloaded app to %s", plugin_path)
+        else:
+            try:
+                plugin_path = pathutil.get_jar_path_from_pom()
+            except FileNotFoundError:
+                logging.error("Could not find the plugin you want to install. Are you in a maven directory?")
+                sys.exit(1)
+    except (MpacAppNotFoundError, MpacAppVersionNotFoundError) as e:
+        logging.error("Could not find the plugin or plugin version %s", e)
+        sys.exit(1)
+    except Exception as e:
+        logging.error("An error occured while downloading an app from the marketplace %s", e)
+        sys.exit(1)
 
     displayed_base_url = base_url.copy().remove(username=True, password=True)
 
@@ -323,7 +358,6 @@ def install(
                 logging.error("An error occurred. The plugin could not be uninstalled.")
         except (FileNotFoundError, zipfile.BadZipFile, KeyError, pathutil.PluginKeyNotFoundError):
             logging.error("Could not get the plugin key of the supplied jar - are you sure you want to upload a plugin, mate?")
-
     logging.info(f"{pathlib.Path(plugin_path).name} will be uploaded to {displayed_base_url}")
 
     try:

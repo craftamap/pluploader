@@ -13,7 +13,8 @@ app_job = typer.Typer()
 
 @app_job.callback()
 def job_root(ctx: typer.Context):
-    """ Manage and Run Confluence Jobs
+    """ Manage and Run Jobs (Confluence only - Beta feature)
+    In order to use this feature, it is required that you users locale is set to english
     """
 
 
@@ -33,11 +34,13 @@ def job_list(
 
         width = int((columns - 17) / 4)
         print(
-            f"{Fore.LIGHTBLACK_EX}{'idx':3} {'name':{width}} {'group':{width*2}} {'id':{width}} {'STS':3} {'RUNBL':5}{Fore.RESET}"
+            f"{Fore.LIGHTBLACK_EX}{'idx':3} {'name':{width}} {'group':{width*2}} {'id':{width}} {'STS':3} {'RUNBL':5}"
+            "{Fore.RESET}"
         )
         if print_all_infos:
             print(
-                f"{Fore.LIGHTBLACK_EX}        {'last execution':{width}} {'next execution':{width}} {'avg duration':7}{Fore.RESET}"
+                f"{Fore.LIGHTBLACK_EX}        {'last execution':{width}} {'next execution':{width}} {'avg duration':7}"
+                "{Fore.RESET}"
             )
         print(f"{Fore.LIGHTBLACK_EX}{'='*columns}{Fore.RESET}")
         for idx, job in enumerate(_job_list):
