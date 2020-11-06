@@ -109,9 +109,10 @@ def root(
         help="Set the base-url of your instance. This flag will overwrite scheme, host, path and port, if those are set in"
         "this string.",
         callback=furl_callback,
+        envvar="PLUP_BASEURL",
     ),
-    user: str = typer.Option("admin", help="Set the username of the user you want to use",),
-    password: str = typer.Option("admin", help="Set the password of the user you want to use",),
+    user: str = typer.Option("admin", help="Set the username of the user you want to use", envvar="PLUP_USER",),
+    password: str = typer.Option("admin", help="Set the password of the user you want to use", envvar="PLUP_PASSWORD",),
     port: typing.Optional[int] = typer.Option(None),
     ask_for_password: typing.Optional[bool] = typer.Option(False, help="Asks user for password interactively"),
     logo: bool = typer.Option(True, help="Print lively apps logo"),
