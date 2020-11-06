@@ -41,6 +41,7 @@ flake8 = "^3.8.4"
 jedi = "^0.17.2"
 isort = "^5.5.4"
 rope = "^0.17.0"
+bpython = "^0.20"
 
 [tool.black]
 line-length = 127
