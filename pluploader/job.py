@@ -13,7 +13,8 @@ app_job = typer.Typer()
 
 @app_job.callback()
 def job_root(ctx: typer.Context):
-    """ Manage and Run Confluence Jobs
+    """ Manage and Run Jobs (Confluence only - Beta feature)
+    In order to use this feature, it is required that you users locale is set to english
     """
 
 

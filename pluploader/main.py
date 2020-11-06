@@ -24,7 +24,7 @@ from .upm import upmapi as upm
 from .util import atlassian_jar as jar
 from .util import pathutil
 from .mpac import download
-from .mpac.extensions import (MpacAppNotFoundError, MpacAppVersionNotFoundError)
+from .mpac.extensions import MpacAppNotFoundError, MpacAppVersionNotFoundError
 
 app = typer.Typer()
 
@@ -276,16 +276,30 @@ def uninstall_plugin(
 @app.command("install")
 def install(
     ctx: typer.Context,
-    file: typing.Optional[pathlib.Path] = typer.Option(None, "--file", "-f", help=""),
-    mpac_id: typing.Optional[str] = typer.Option(None, "--mpac-id"),
-    mpac_key: typing.Optional[str] = typer.Option(None, "--mpac-key"),
-    interactive: typing.Optional[bool] = typer.Option(
-        False,
-        "--interactive",
-        "-i",
-        help="Pluploader tries find an plugin in the current directory. If you want to specify the location of the plugin "
-        "you want to upload, use -f /path/to/jar",
+    file: typing.Optional[pathlib.Path] = typer.Option(
+        None,
+        "--file",
+        "-f",
+        help="pluploader tries find an plugin in the current directory. If you want to specify the location of the plugin you "
+        "want to upload, use -f /path/to/jar",
     ),
+    mpac_id: typing.Optional[str] = typer.Option(
+        None,
+        "--mpac-id",
+        help="""When mpac-id is specified, pluploader tries to download the specified plugin from the marketplace.\n
+The marketplace id can be found in the url: 1213057 in https://marketplace.atlassian.com/apps/1213057\n
+To specify the version, use the == syntax: 1213057==3.10.1 will download 3.10.1\n
+Warning: mpac-id is considered unstable; consider using --mpac-key
+""",
+    ),
+    mpac_key: typing.Optional[str] = typer.Option(
+        None,
+        "--mpac-key",
+        help="""When mpac-key is specified, pluploader tries to download the specified plugin from the marketplace.
+The mpac-key is the app key.\n
+To specify the version, use the == syntax: 1213057==3.10.1 will download 3.10.1""",
+    ),
+    interactive: typing.Optional[bool] = typer.Option(False, "--interactive", "-i", help="confirm the upload of the app",),
     reinstall: typing.Optional[bool] = typer.Option(
         False, "--reinstall", help="Plugin will be uninstalled before it will be installed"
     ),
