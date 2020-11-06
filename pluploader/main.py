@@ -24,6 +24,7 @@ from .upm import upmapi as upm
 from .util import atlassian_jar as jar
 from .util import pathutil
 from .mpac import download
+from .mpac.extensions import (MpacAppNotFoundError, MpacAppVersionNotFoundError)
 
 app = typer.Typer()
 
@@ -292,27 +293,31 @@ def install(
     """installs the plugin of the current maven project or a specified one; you can also omit install
     """
     base_url: furl.furl = ctx.obj.get("base_url")
-    if file is not None:
-        plugin_path = file
-    elif mpac_id is not None:
-        id, version = download.split_name_and_version(mpac_id)
-        plugin_path = download.download_app_by_marketplace_id(id, version)
-        print(plugin_path)
-    elif mpac_key is not None:
-        key, version = download.split_name_and_version(mpac_key)
-        print(key, version)
-        if version is None:
-            plugin_path = download.download_app_by_app_key(key)
-        else:
+    try:
+        if file is not None:
+            plugin_path = file
+        elif mpac_id is not None:
+            id, version = download.split_name_and_version(mpac_id)
+            logging.info("Downloading app %s (%s)...", id, version)
+            plugin_path = download.download_app_by_marketplace_id(id, version)
+            logging.info("Successfully downloaded app to %s", plugin_path)
+        elif mpac_key is not None:
+            key, version = download.split_name_and_version(mpac_key)
+            logging.info("Downloading app %s (%s)...", key, version)
             plugin_path = download.download_app_by_app_key(key, version)
-
-        print(plugin_path)
-    else:
-        try:
-            plugin_path = pathutil.get_jar_path_from_pom()
-        except FileNotFoundError:
-            logging.error("Could not find the plugin you want to install. Are you in a maven directory?")
-            sys.exit(1)
+            logging.info("Successfully downloaded app to %s", plugin_path)
+        else:
+            try:
+                plugin_path = pathutil.get_jar_path_from_pom()
+            except FileNotFoundError:
+                logging.error("Could not find the plugin you want to install. Are you in a maven directory?")
+                sys.exit(1)
+    except (MpacAppNotFoundError, MpacAppVersionNotFoundError) as e:
+        logging.error("Could not find the plugin or plugin version %s", e)
+        sys.exit(1)
+    except Exception as e:
+        logging.error("An error occured while downloading an app from the marketplace %s", e)
+        sys.exit(1)
 
     displayed_base_url = base_url.copy().remove(username=True, password=True)
 
@@ -339,7 +344,6 @@ def install(
                 logging.error("An error occurred. The plugin could not be uninstalled.")
         except (FileNotFoundError, zipfile.BadZipFile, KeyError, pathutil.PluginKeyNotFoundError):
             logging.error("Could not get the plugin key of the supplied jar - are you sure you want to upload a plugin, mate?")
-
     logging.info(f"{pathlib.Path(plugin_path).name} will be uploaded to {displayed_base_url}")
 
     try:

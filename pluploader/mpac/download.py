@@ -21,7 +21,6 @@ def _download_file_to_tmp_dir(url: furl) -> os.PathLike:
 
     filename = pluploader_temp_dir / response_url.path.segments[-1].split("/")[-1]
 
-    print(filename)
     with open(filename, "wb") as tmpfile:
         tmpfile.write(response.content)
     return filename
@@ -41,7 +40,7 @@ def download_app_by_marketplace_id(marketplace_id: str, version: str = "latest")
 
 def split_name_and_version(input: str) -> typing.Tuple[str, typing.Optional[str]]:
     split = input.split("==")
-    version = None
+    version = "latest"
     if len(split) == 1:
         name = split[0]
     elif len(split) == 2 and split[1].strip() == "":

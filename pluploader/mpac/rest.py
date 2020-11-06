@@ -7,6 +7,7 @@ import dataclasses
 import requests
 import typing
 from furl import furl
+from .extensions import MpacAppVersionNotFoundError
 
 BASE_URL = furl("https://marketplace.atlassian.com/rest/2")
 
@@ -51,11 +52,19 @@ class AddonVersion:
         )
 
 
-def get_app_version(addonKey: str, version: str = "latest"):
+def get_app_version(addonKey: str, version: str = "latest", hosting: str = "server"):
+    """ Choosing "server" as default hosting option for now... We propably need to change this
+    in 2022?, when you people will stop publishing server versions
+    """
+    url: furl
     if version == "latest":
         url = BASE_URL / f"addons/{addonKey}/versions/{version}"
     else:
         url = BASE_URL / f"addons/{addonKey}/versions/name/{version}"
+    url.args["hosting"] = hosting
     response = requests.get(url)
+
+    if not response.ok:
+        raise MpacAppVersionNotFoundError(url)
 
     return AddonVersion.decode(response.json())
