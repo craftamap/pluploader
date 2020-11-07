@@ -1,8 +1,6 @@
 ## pluploader
 
-[![PyPI version](https://badge.fury.io/py/pluploader.svg)](https://badge.fury.io/py/pluploader)
-
-![Upload Python Package](https://github.com/livelyapps/pluploader/workflows/Upload%20Python%20Package/badge.svg)
+[![PyPI version](https://badge.fury.io/py/pluploader.svg)](https://badge.fury.io/py/pluploader) ![Upload Python Package](https://github.com/livelyapps/pluploader/workflows/Upload%20Python%20Package/badge.svg)
 
 A simple command line plugin uploader/installer/manager for atlassian product 
 server instances (Confluence/Jira) written in python(3).
@@ -75,6 +73,17 @@ It is recommended to use the pluploader with maven. The usage looks like:
 atlas-mvn clean package && pluploader
 ```
 
+#### Installing apps from the marketplace
+
+pluploader supports downloading apps from the atlassian marketplace to your local 
+machine and installing them afterwards. You need to supply either `--mpac-key`,
+which is the normal addon-key, or `--mpac-id` (experimental), which is the 
+numeric id of an marketplace id ( )
+
+```
+
+```
+
 **NOTE**: 
 If you specify one of the global options, you need to add the `install`-command:
 
@@ -82,7 +91,7 @@ If you specify one of the global options, you need to add the `install`-command:
 pluploader --base-url https://your-confluence.com:8090 install
 ```
 
-You can work around this by using the configuration file
+You can work around this by using the configuration file.
 
 ### Managing plugins
 
@@ -112,7 +121,7 @@ The commands `enable`, `disable` or `uninstall` follow the same syntax.
 
 ### Safe Mode
 
-Pluploader also supports disabling or enabling all apps using Safe Mode.
+pluploader also supports disabling or enabling all apps using Safe Mode.
 
 To retrieve the status if safe-mode is enabled at the moment, use
 ```
@@ -174,6 +183,9 @@ pluploader license delete com.example.plugin.key
 
 ### Scheduled Jobs (Confluence - Experimental)
 
+> ℹ This feature is currently experimental and only works in specific version of 
+> Confluence (tested on Confluence 7.5).
+
 Pluploader can also be used to retrieve information about confluence jobs and
 execute them.
 
@@ -214,7 +226,7 @@ interactively.
 
 If you don't want to write the username or password (or any other global 
 parameter) each time, you can use a filed called `.pluprc`, either placed in 
-your current maven project or/and in your homedirectory. A example looks like 
+your current maven project or/and in your home directory. A example looks like 
 this:
 
 ```
@@ -223,11 +235,14 @@ user: admin
 password: admin
 ```
 
+### Environment variables
+
+You can also specify username, password and base url by using `PLUP_USER`, 
+`PLUP_PASSWORD` and `PLUP_BASEURL`.
 
 ## Development
 
-pluploader uses poetry as it's package manager. As a command line parser,
-
+pluploader uses poetry as it's package manager.
 
 ## FAQ
 
