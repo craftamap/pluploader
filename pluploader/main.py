@@ -20,7 +20,7 @@ from . import __version__
 from .job import app_job
 from .license import app_license
 from .safemode import app_safemode
-from .upm import upmapi as upm
+from .upm import upmapi as upm, upmapi_cloud as cloud
 from .util import atlassian_jar as jar
 from .util import pathutil
 from .mpac import download
@@ -91,10 +91,12 @@ def version_callback(value: bool):
 
 
 def furl_callback(value: str) -> furl.furl:
+    if value is None:
+        return None
     try:
         _url = furl.furl(value)
         if not (furl.is_valid_host(_url.host) and furl.is_valid_port(_url.port) and furl.is_valid_scheme(_url.scheme)):
-            raise ValueError
+            raise ValueError()
     except Exception:
         raise typer.BadParameter('Make sure to provide an valid url (e.G. "https://your.confluence.net:8090")')
     return _url
@@ -277,12 +279,21 @@ def uninstall_plugin(
 @app.command("install")
 def install(
     ctx: typer.Context,
+    cloud: bool = typer.Option(False, "--cloud"),
     file: typing.Optional[pathlib.Path] = typer.Option(
         None,
         "--file",
         "-f",
         help="pluploader tries find an plugin in the current directory. If you want to specify the location of the plugin you "
         "want to upload, use -f /path/to/jar",
+    ),
+    plugin_uri: typing.Optional[str] = typer.Option(
+        None,
+        "--plugin-uri",
+        "-u",
+        callback=furl_callback,
+        help="CLOUD ONLY: The uri/url of to the app descriptor, for example "
+        "https://placeholder.ngrok.com/atlassian-connect.json",
     ),
     mpac_id: typing.Optional[str] = typer.Option(
         None,
@@ -308,6 +319,58 @@ To specify the version, use the == syntax: 1213057==3.10.1 will download 3.10.1"
     """installs the plugin of the current maven project or a specified one; you can also omit install
     """
     base_url: furl.furl = ctx.obj.get("base_url")
+    if cloud:
+        if plugin_uri is None:
+            raise typer.BadParameter("--plugin-uri is required when --cloud is set")
+        install_cloud(base_url, plugin_uri)
+    else:
+        install_server(base_url, file, mpac_id, mpac_key, interactive, reinstall)
+
+
+def install_cloud(base_url: furl.furl, plugin_uri: furl.furl):
+    try:
+        token = upm.get_token(base_url)
+    except requests.exceptions.RequestException:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except KeyError:
+        logging.error("UPM Token couldn't be retrieved; are your credentials correct?")
+        sys.exit(1)
+
+    try:
+        response = cloud.install_plugin(base_url, plugin_uri, token)
+        with TqdmUpTo(total=100) as progress:
+            percentage = 0
+            progress.update_to(percentage)
+            while percentage != 100:
+                percentage, res = cloud.install_plugin_get_current_progress(base_url, response)
+                progress.update(percentage)
+                time.sleep(0.1)
+        logging.info("plugin installed!")
+        app_key = furl.furl(res).path.segments[-1][:-4]
+        plugin = upm.get_plugin(base_url, app_key)
+    except requests.exceptions.RequestException as e:
+        logging.error("An error occured while uploading plugin %s", e)
+        sys.exit(1)
+    except Exception as e:
+        logging.error("An error occured while uploading plugin %s", e)
+        sys.exit(1)
+
+    if plugin.enabled:
+        status = f"{Fore.GREEN}enabled{Fore.RESET}!"
+    else:
+        status = f"{Fore.RED}disabled{Fore.RESET}!"
+    logging.info(f"plugin installed and {status}")
+
+
+def install_server(
+    base_url: furl.furl,
+    file: typing.Optional[pathlib.Path],
+    mpac_id: typing.Optional[str],
+    mpac_key: typing.Optional[str],
+    interactive: typing.Optional[bool],
+    reinstall: typing.Optional[bool],
+):
     try:
         if file is not None:
             plugin_path = file
