@@ -343,12 +343,10 @@ def install_cloud(base_url: furl.furl, plugin_uri: furl.furl):
             percentage = 0
             progress.update_to(percentage)
             while percentage != 100:
-                percentage, res = cloud.install_plugin_get_current_progress(base_url, response)
+                percentage, plugin = cloud.install_plugin_get_current_progress(base_url, response)
                 progress.update(percentage)
-                time.sleep(0.1)
-        logging.info("plugin installed!")
-        app_key = furl.furl(res).path.segments[-1][:-4]
-        plugin = upm.get_plugin(base_url, app_key)
+                if percentage != 100:
+                    time.sleep(0.1)
     except requests.exceptions.RequestException as e:
         logging.error("An error occured while uploading plugin %s", e)
         sys.exit(1)
@@ -356,7 +354,7 @@ def install_cloud(base_url: furl.furl, plugin_uri: furl.furl):
         logging.error("An error occured while uploading plugin %s", e)
         sys.exit(1)
 
-    if plugin.enabled:
+    if plugin and plugin.enabled:
         status = f"{Fore.GREEN}enabled{Fore.RESET}!"
     else:
         status = f"{Fore.RED}disabled{Fore.RESET}!"
