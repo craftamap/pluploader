@@ -5,7 +5,7 @@ from enum import Enum
 import requests
 import typer
 
-from .upm import upmapi as upm
+from .upm.upmapi import UpmApi
 from .util import pathutil
 
 app_license = typer.Typer()
@@ -59,7 +59,8 @@ def info(ctx: typer.Context, plugin: str = typer.Argument(None, help="the plugin
             )
             sys.exit(1)
     try:
-        license = upm.get_license(ctx.obj.get("base_url"), plugin)
+        upm = UpmApi(ctx.obj.get("base_url"))
+        license = upm.get_license(plugin)
     except requests.exceptions.ConnectionError:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
@@ -87,7 +88,8 @@ def update(
             logging.error("Could not find the plugin you want to update the license of. Is the plugin key set in the pom.xml?")
             sys.exit(1)
     try:
-        license = upm.update_license(ctx.obj.get("base_url"), plugin, license)
+        upm = UpmApi(ctx.obj.get("base_url"))
+        license = upm.update_license(plugin, license)
     except requests.exceptions.ConnectionError:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
@@ -113,7 +115,8 @@ def delete(
             logging.error("Could not find the plugin you want to delete the licence of. Is the plugin key set in the pom.xml?")
             sys.exit(1)
     try:
-        license = upm.delete_license(ctx.obj.get("base_url"), plugin)
+        upm = UpmApi(ctx.obj.get("base_url"))
+        license = upm.delete_license(plugin)
     except requests.exceptions.ConnectionError:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
@@ -145,7 +148,8 @@ def timebomb(
             logging.error("Could not find the plugin you want to update the license of. Is the plugin key set in the pom.xml?")
             sys.exit(1)
     try:
-        license = upm.update_license(ctx.obj.get("base_url"), plugin, timebomb_licenses[timebomb])
+        upm = UpmApi(ctx.obj.get("base_url"))
+        license = upm.update_license(plugin, timebomb_licenses[timebomb])
     except requests.exceptions.ConnectionError:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
@@ -155,4 +159,3 @@ def timebomb(
         sys.exit(1)
     for key, value in license.__dict__.items():
         print(f"{(key.replace('_', ' ') + ':'):25.25} {value}")
-
