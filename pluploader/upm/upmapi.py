@@ -94,6 +94,8 @@ class License:
     expiry_date: typing.Optional[int]
     raw_license: typing.Optional[str]
     active: typing.Optional[bool]
+    cloud_SEN: typing.Optional[str]
+    cloud_auto_renewal: typing.Optional[str]
 
     @classmethod
     def decode(cls, obj: dict) -> "License":
@@ -109,6 +111,8 @@ class License:
                 expiry_date=obj.get("expiryDate", None),
                 raw_license=obj.get("rawLicense"),
                 active=obj.get("active", None),
+                cloud_SEN=obj.get("supportEntitlementNumber", None),
+                cloud_auto_renewal=obj.get("autoRenewal", None),
             )
         raise ValueError('decode expected passed object to have a "rawLicense" field.')
 
