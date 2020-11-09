@@ -4,7 +4,7 @@ import logging
 import requests
 import sys
 
-from .upm import upmapi as upm
+from .upm.upmapi import UpmApi
 
 app_safemode = typer.Typer()
 
@@ -19,11 +19,8 @@ def safemode(ctx: typer.Context):
 def safemode_status(ctx: typer.Context):
     """ prints out the safemode status """
     try:
-        safemode_st = (
-            f"{Fore.YELLOW}enabled{Fore.RESET}"
-            if upm.get_safemode(ctx.obj.get("base_url"))
-            else f"{Fore.GREEN}disabled{Fore.RESET}"
-        )
+        upm = UpmApi(ctx.obj.get("base_url"))
+        safemode_st = f"{Fore.YELLOW}enabled{Fore.RESET}" if upm.get_safemode() else f"{Fore.GREEN}disabled{Fore.RESET}"
         logging.info("Safe-mode is currently %s", safemode_st)
     except requests.exceptions.ConnectionError:
         logging.error("Could not connect to host - check your base-url")
@@ -37,7 +34,8 @@ def safemode_status(ctx: typer.Context):
 @app_safemode.command("enable")
 def safemode_enable(ctx: typer.Context):
     try:
-        success = upm.enable_disable_safemode(ctx.obj.get("base_url"), True)
+        upm = UpmApi(ctx.obj.get("base_url"))
+        success = upm.enable_disable_safemode(True)
         if success:
             logging.info(f"Safe-mode is now {Fore.GREEN}enabled{Fore.RESET}")
         else:
@@ -54,7 +52,8 @@ def safemode_enable(ctx: typer.Context):
 @app_safemode.command("disable")
 def safemode_disable(ctx: typer.Context, keep_state: bool = typer.Option(False)):
     try:
-        success = upm.enable_disable_safemode(ctx.obj.get("base_url"), False, keep_state)
+        upm = UpmApi(ctx.obj.get("base_url"))
+        success = upm.enable_disable_safemode(False, keep_state)
         if success:
             logging.info(
                 f"Safe-mode is now {Fore.GREEN}disabled{Fore.RESET}, all plugins"

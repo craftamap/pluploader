@@ -7,7 +7,7 @@ import dataclasses
 import requests
 import typing
 from furl import furl
-from .extensions import MpacAppVersionNotFoundError
+from .exceptions import MpacAppVersionNotFoundError
 
 BASE_URL = furl("https://marketplace.atlassian.com/rest/2")
 

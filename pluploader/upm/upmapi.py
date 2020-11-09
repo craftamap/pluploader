@@ -10,8 +10,6 @@ from colorama import Fore
 from furl import furl
 from packaging import version
 
-UPM_API_ENDPOINT: str = "/rest/plugins/1.0/"
-
 
 @dataclasses.dataclass()
 class ModuleDto:
@@ -117,158 +115,151 @@ class License:
         raise ValueError('decode expected passed object to have a "rawLicense" field.')
 
 
-def get_token(base_url: furl) -> str:
-    """ Get token from api endpoint
-    """
-    token_url: furl = base_url.copy()
-    token_url.add(path=UPM_API_ENDPOINT)
-    token_url.set(args={"os_authType": "basic"})
-    token_response = requests.head(token_url.url)
-    token = token_response.headers["upm-token"]
-    return token
+class UpmApi:
+    UPM_API_ENDPOINT: str = "/rest/plugins/1.0/"
 
+    def __init__(self, base_url: furl):
+        self.base_url: furl = base_url
 
-def upload_plugin(base_url: furl, files: typing.Dict[str, typing.BinaryIO], token: str) -> typing.Tuple[int, typing.Any]:
-    """ Upload plugin
-    """
-    upload_url = base_url.copy()
-    upload_url.set(args={"token": token})
-    upload_url.add(path=UPM_API_ENDPOINT)
-    upload_response = requests.post(upload_url.url, files=files)
-    text = upload_response.text.replace("<textarea>", "").replace("</textarea>", "")
-    upload_response_data = json.loads(text)
-    progress = int(upload_response_data.get("status", {}).get("amountDownloaded", 0))
-    return progress, upload_response_data
+    def get_token(self) -> str:
+        """ Get token from api endpoint
+        """
+        token_url: furl = self.base_url.copy()
+        token_url.add(path=self.UPM_API_ENDPOINT)
+        token_url.set(args={"os_authType": "basic"})
+        token_response = requests.head(token_url.url)
+        token = token_response.headers["upm-token"]
+        return token
 
+    def upload_plugin(self, files: typing.Dict[str, typing.BinaryIO], token: str) -> typing.Tuple[int, typing.Any]:
+        """ Upload plugin
+        """
+        upload_url = self.base_url.copy()
+        upload_url.set(args={"token": token})
+        upload_url.add(path=self.UPM_API_ENDPOINT)
+        upload_response = requests.post(upload_url.url, files=files)
+        text = upload_response.text.replace("<textarea>", "").replace("</textarea>", "")
+        upload_response_data = json.loads(text)
+        progress = int(upload_response_data.get("status", {}).get("amountDownloaded", 0))
+        return progress, upload_response_data
 
-def get_current_progress(base_url: furl, previous_request) -> typing.Tuple[int, typing.Dict]:
-    progress_url = base_url.copy()
-    progress_url.set(path=previous_request["links"]["self"])
-    progress_rd = requests.get(progress_url.url).json()
-    if "type" in progress_rd:
-        progress = int(progress_rd.get("status", {}).get("amountDownloaded", 0))
-        return progress, progress_rd
-    return 100, progress_rd
+    def get_current_progress(self, previous_request) -> typing.Tuple[int, typing.Dict]:
+        progress_url = self.base_url.copy()
+        progress_url.set(path=previous_request["links"]["self"])
+        progress_rd = requests.get(progress_url.url).json()
+        if "type" in progress_rd:
+            progress = int(progress_rd.get("status", {}).get("amountDownloaded", 0))
+            return progress, progress_rd
+        return 100, progress_rd
 
+    def get_all_plugins(self, user_installed: bool = True) -> typing.List[PluginDto]:
+        """ Gets a list of all installed plugins from the api and returns it
+        If user_installed is set true (default), only user installed plugins are listed
+        """
+        request_url = self.base_url.copy()
+        request_url.add(path=self.UPM_API_ENDPOINT)
+        response = requests.get(request_url.url)
+        return_obj = [PluginDto.decode(x) for x in response.json().get("plugins", [])]
+        if user_installed:
+            return_obj = filter(lambda x: x.userInstalled, return_obj)
+        return return_obj
 
-def get_all_plugins(base_url: furl, user_installed: bool = True) -> typing.List[PluginDto]:
-    """ Gets a list of all installed plugins from the api and returns it
-    If user_installed is set true (default), only user installed plugins are listed
-    """
-    request_url = base_url.copy()
-    request_url.add(path=UPM_API_ENDPOINT)
-    response = requests.get(request_url.url)
-    return_obj = [PluginDto.decode(x) for x in response.json().get("plugins", [])]
-    if user_installed:
-        return_obj = filter(lambda x: x.userInstalled, return_obj)
-    return return_obj
+    def get_plugin(self, plugin_key: str) -> PluginDto:
+        """ Gets Plugin info by using the UPM_API_ENDPOINT/plugin-key/ endpoint and
+        returns it as a PluginDto
+        """
+        request_url = self.base_url.copy()
+        request_url.add(path=self.UPM_API_ENDPOINT)
+        request_url.join(plugin_key + "-key")
+        response = requests.get(request_url.url)
+        return_obj = PluginDto.decode(response.json())
+        return return_obj
 
+    def enable_disable_plugin(self, plugin_key: str, enabled: bool) -> PluginDto:
+        """ Enables/Disables Plugin"""
+        mod = {"enabled": enabled}
+        return self._modify_plugin(plugin_key, mod)
 
-def get_plugin(base_url: furl, plugin_key: str) -> PluginDto:
-    """ Gets Plugin info by using the UPM_API_ENDPOINT/plugin-key/ endpoint and
-    returns it as a PluginDto
-    """
-    request_url = base_url.copy()
-    request_url.add(path=UPM_API_ENDPOINT)
-    request_url.join(plugin_key + "-key")
-    response = requests.get(request_url.url)
-    return_obj = PluginDto.decode(response.json())
-    return return_obj
+    def _modify_plugin(self, plugin_key: str, modifications: dict) -> PluginDto:
+        """ Puts Changes to plugin by using the UPM_API_ENDPOINT/plugin-key/ endpoint and
+        returns new infos as a PluginDto
+        """
+        request_url = self.base_url.copy()
+        request_url.add(path=self.UPM_API_ENDPOINT)
+        request_url.join(plugin_key + "-key")
+        headers = {"Content-Type": "application/vnd.atl.plugins.plugin+json"}
+        response = requests.put(request_url.url, json=modifications, headers=headers)
+        return_obj = PluginDto.decode(response.json())
+        return return_obj
 
+    def uninstall_plugin(self, plugin_key: str) -> bool:
+        """ Uninstalls a plugin by using the UPM_API_ENDPOINT/plugin-key/ endpoint
+        """
+        request_url = self.base_url.copy()
+        request_url.add(path=self.UPM_API_ENDPOINT)
+        request_url.join(plugin_key + "-key")
+        response = requests.delete(request_url.url)
+        return response.status_code == 204
 
-def enable_disable_plugin(base_url: furl, plugin_key: str, enabled: bool) -> PluginDto:
-    """ Enables/Disables Plugin"""
-    mod = {"enabled": enabled}
-    return _modify_plugin(base_url, plugin_key, mod)
+    def module_status(self, previous_request: dict,) -> typing.Tuple[int, int, typing.List[ModuleDto]]:
+        """ Returns the module status of an plugin based on a request/dict containing an PluginDto
+        returns an tuple containing
+            1. number of all plugins
+            2. number of enabled plugins
+            3. Array of disabled plugins
+        """
+        plugin_dto = PluginDto.decode(previous_request)
+        disabled_modules = [module for module in plugin_dto.modules if not module.enabled]
+        all_modules = len(plugin_dto.modules)
+        enabled_modules = all_modules - len(disabled_modules)
+        return all_modules, enabled_modules, disabled_modules
 
+    def get_safemode(self) -> bool:
+        request_url = self.base_url.copy()
+        request_url.add(path=self.UPM_API_ENDPOINT)
+        request_url.add(path="safe-mode")
+        response = requests.get(request_url.url)
+        return response.json()["enabled"]
 
-def _modify_plugin(base_url: furl, plugin_key: str, modifications: dict) -> PluginDto:
-    """ Puts Changes to plugin by using the UPM_API_ENDPOINT/plugin-key/ endpoint and
-    returns new infos as a PluginDto
-    """
-    request_url = base_url.copy()
-    request_url.add(path=UPM_API_ENDPOINT)
-    request_url.join(plugin_key + "-key")
-    headers = {"Content-Type": "application/vnd.atl.plugins.plugin+json"}
-    response = requests.put(request_url.url, json=modifications, headers=headers)
-    return_obj = PluginDto.decode(response.json())
-    return return_obj
+    def enable_disable_safemode(self, enable: bool, keepState: bool = False) -> bool:
+        headers = {"Content-Type": "application/vnd.atl.plugins.safe.mode.flag+json"}
+        data = {
+            "enabled": enable,
+            "links": {},
+        }
 
+        request_url = self.base_url.copy()
+        request_url.add(path=self.UPM_API_ENDPOINT)
+        request_url.add(path="safe-mode")
+        request_url.add(query_params={"keepState": "true" if keepState else "false"})
+        response = requests.put(request_url.url, headers=headers, json=data)
+        response_json = response.json()
+        return "subCode" not in response_json and response_json["enabled"] == enable
 
-def uninstall_plugin(base_url: furl, plugin_key: str) -> bool:
-    """ Uninstalls a plugin by using the UPM_API_ENDPOINT/plugin-key/ endpoint
-    """
-    request_url = base_url.copy()
-    request_url.add(path=UPM_API_ENDPOINT)
-    request_url.join(plugin_key + "-key")
-    response = requests.delete(request_url.url)
-    return response.status_code == 204
-
-
-def module_status(previous_request: dict,) -> typing.Tuple[int, int, typing.List[ModuleDto]]:
-    """ Returns the module status of an plugin based on a request/dict containing an PluginDto
-    returns an tuple containing
-        1. number of all plugins
-        2. number of enabled plugins
-        3. Array of disabled plugins
-    """
-    plugin_dto = PluginDto.decode(previous_request)
-    disabled_modules = [module for module in plugin_dto.modules if not module.enabled]
-    all_modules = len(plugin_dto.modules)
-    enabled_modules = all_modules - len(disabled_modules)
-    return all_modules, enabled_modules, disabled_modules
-
-
-def get_safemode(base_url: furl) -> bool:
-    request_url = base_url.copy()
-    request_url.add(path=UPM_API_ENDPOINT)
-    request_url.add(path="safe-mode")
-    response = requests.get(request_url.url)
-    return response.json()["enabled"]
-
-
-def enable_disable_safemode(base_url: furl, enable: bool, keepState: bool = False) -> bool:
-    headers = {"Content-Type": "application/vnd.atl.plugins.safe.mode.flag+json"}
-    data = {
-        "enabled": enable,
-        "links": {},
-    }
-
-    request_url = base_url.copy()
-    request_url.add(path=UPM_API_ENDPOINT)
-    request_url.add(path="safe-mode")
-    request_url.add(query_params={"keepState": "true" if keepState else "false"})
-    response = requests.put(request_url.url, headers=headers, json=data)
-    response_json = response.json()
-    return "subCode" not in response_json and response_json["enabled"] == enable
-
-
-def get_license(base_url: furl, plugin_key: str) -> License:
-    request_url = base_url.copy()
-    request_url.add(path=UPM_API_ENDPOINT)
-    request_url.add(path=plugin_key + "-key")
-    request_url.add(path="license")
-    response = requests.get(request_url.url)
-    return License.decode(response.json())
-
-
-def update_license(base_url: furl, plugin_key: str, raw_license: str):
-    request_url = base_url.copy()
-    request_url.add(path=UPM_API_ENDPOINT)
-    request_url.add(path=plugin_key + "-key")
-    request_url.add(path="license")
-    headers = {"Content-Type": "application/vnd.atl.plugins+json"}
-    try:
-        response = requests.put(request_url.url, json={"rawLicense": raw_license}, headers=headers)
+    def get_license(self, plugin_key: str) -> License:
+        request_url = self.base_url.copy()
+        request_url.add(path=self.UPM_API_ENDPOINT)
+        request_url.add(path=plugin_key + "-key")
+        request_url.add(path="license")
+        response = requests.get(request_url.url)
         return License.decode(response.json())
-    except Exception:
-        raise ValueError(response.status_code, response.content)
 
+    def update_license(self, plugin_key: str, raw_license: str):
+        request_url = self.base_url.copy()
+        request_url.add(path=self.UPM_API_ENDPOINT)
+        request_url.add(path=plugin_key + "-key")
+        request_url.add(path="license")
+        headers = {"Content-Type": "application/vnd.atl.plugins+json"}
+        try:
+            response = requests.put(request_url.url, json={"rawLicense": raw_license}, headers=headers)
+            return License.decode(response.json())
+        except Exception:
+            raise ValueError(response.status_code, response.content)
 
-def delete_license(base_url: furl, plugin_key: str):
-    request_url = base_url.copy()
-    request_url.add(path=UPM_API_ENDPOINT)
-    request_url.add(path=plugin_key + "-key")
-    request_url.add(path="license")
-    response = requests.delete(request_url.url)
-    return License.decode(response.json())
+    def delete_license(self, plugin_key: str):
+        request_url = self.base_url.copy()
+        request_url.add(path=self.UPM_API_ENDPOINT)
+        request_url.add(path=plugin_key + "-key")
+        request_url.add(path="license")
+        response = requests.delete(request_url.url)
+        return License.decode(response.json())

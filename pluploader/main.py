@@ -19,12 +19,13 @@ from tqdm import tqdm
 from . import __version__
 from .job import app_job
 from .license import app_license
+from .mpac import download
+from .mpac.exceptions import MpacAppNotFoundError, MpacAppVersionNotFoundError
 from .safemode import app_safemode
-from .upm import upmapi as upm, upmapi_cloud as cloud
+from .upm.upmapi_cloud import UpmCloudApi
+from .upm.upmapi import UpmApi
 from .util import atlassian_jar as jar
 from .util import pathutil
-from .mpac import download
-from .mpac.extensions import MpacAppNotFoundError, MpacAppVersionNotFoundError
 
 app = typer.Typer()
 
@@ -76,6 +77,8 @@ def main():
                 settings.update(yaml.safe_load(stream))
             except yaml.YAMLError:
                 logging.warning("Looks like your configuration file is not yaml, the file will be ignored")
+            except Exception as e: 
+                logging.warning("Config %s failed to read and will be ignored. %s", config_location, e)
 
     cmd: DefaultGroup = typer.main.get_command(app)
     cmd.default_if_no_args = True
@@ -146,7 +149,8 @@ def list_all(
 ):
     """ Prints out basic plugin informations of all plugins"""
     try:
-        all_plugins = upm.get_all_plugins(ctx.obj.get("base_url"), not print_all)
+        upm = UpmApi(ctx.obj.get("base_url"))
+        all_plugins = upm.get_all_plugins(not print_all)
     except requests.exceptions.ConnectionError:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
@@ -183,7 +187,8 @@ def plugin_info(
             logging.error("Could not find the plugin you want to get the info of. Is the plugin key set in the pom.xml?")
             sys.exit(1)
     try:
-        info = upm.get_plugin(ctx.obj.get("base_url"), plugin)
+        upm = UpmApi(ctx.obj.get("base_url"))
+        info = upm.get_plugin(plugin)
     except requests.exceptions.ConnectionError:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
@@ -209,7 +214,8 @@ def enable_plugin(
             logging.error("Could not find the plugin you want to get the info of. Is the plugin key set in the pom.xml?")
             sys.exit(1)
     try:
-        response = upm.enable_disable_plugin(ctx.obj.get("base_url"), plugin, True)
+        upm = UpmApi(ctx.obj.get("base_url"))
+        response = upm.enable_disable_plugin(plugin, True)
     except requests.exceptions.ConnectionError:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
@@ -235,7 +241,8 @@ def disable_plugin(
             logging.error("Could not find the plugin you want to get the info of. Is the plugin key set in the pom.xml?")
             sys.exit(1)
     try:
-        response = upm.enable_disable_plugin(ctx.obj.get("base_url"), plugin, False)
+        upm = UpmApi(ctx.obj.get("base_url"))
+        response = upm.enable_disable_plugin(plugin, False)
     except requests.exceptions.ConnectionError:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
@@ -262,7 +269,8 @@ def uninstall_plugin(
             logging.error("Could not find the plugin you want to get the info of. Is the plugin key set in the pom.xml?")
             sys.exit(1)
     try:
-        status = upm.uninstall_plugin(ctx.obj.get("base_url"), plugin)
+        upm = UpmApi(ctx.obj.get("base_url"))
+        status = upm.uninstall_plugin(plugin)
     except requests.exceptions.ConnectionError:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
@@ -329,7 +337,8 @@ To specify the version, use the == syntax: 1213057==3.10.1 will download 3.10.1"
 
 def install_cloud(base_url: furl.furl, plugin_uri: furl.furl):
     try:
-        token = upm.get_token(base_url)
+        cloud = UpmCloudApi(base_url)
+        token = cloud.get_token()
     except requests.exceptions.RequestException:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
@@ -338,12 +347,12 @@ def install_cloud(base_url: furl.furl, plugin_uri: furl.furl):
         sys.exit(1)
 
     try:
-        response = cloud.install_plugin(base_url, plugin_uri, token)
+        response = cloud.install_plugin(plugin_uri, token)
         with TqdmUpTo(total=100) as progress:
             percentage = 0
             progress.update_to(percentage)
             while percentage != 100:
-                percentage, plugin = cloud.install_plugin_get_current_progress(base_url, response)
+                percentage, plugin = cloud.install_plugin_get_current_progress(response)
                 progress.update(percentage)
                 if percentage != 100:
                     time.sleep(0.1)
@@ -402,11 +411,12 @@ def install_server(
         if confirm.lower() != "y":
             sys.exit()
 
+    upm = UpmApi(base_url)
     if reinstall:
         try:
             plugin_key = jar.get_plugin_key_from_jar_path(plugin_path)
             try:
-                status = upm.uninstall_plugin(base_url, plugin_key)
+                status = upm.uninstall_plugin(plugin_key)
             except requests.exceptions.ConnectionError:
                 logging.error("Could not connect to host - check your base-url")
                 sys.exit(1)
@@ -423,7 +433,7 @@ def install_server(
     logging.info(f"{pathlib.Path(plugin_path).name} will be uploaded to {displayed_base_url}")
 
     try:
-        token = upm.get_token(base_url)
+        token = upm.get_token()
     except requests.exceptions.RequestException:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
@@ -436,9 +446,9 @@ def install_server(
             files = {"plugin": plugin_file}
             with TqdmUpTo(total=100) as pbar:
                 pbar.update_to(0)
-                progress, previous_request = upm.upload_plugin(base_url, files, token)
+                progress, previous_request = upm.upload_plugin(files, token)
                 while progress != 100:
-                    progress, previous_request = upm.get_current_progress(base_url, previous_request)
+                    progress, previous_request = upm.get_current_progress(previous_request)
                     pbar.update_to(progress)
                     time.sleep(0.1)
     except requests.exceptions.RequestException:
