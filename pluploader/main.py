@@ -22,7 +22,7 @@ from .license import app_license
 from .mpac import download
 from .mpac.exceptions import MpacAppNotFoundError, MpacAppVersionNotFoundError
 from .safemode import app_safemode
-from .upm.upmapi_cloud import UpmCloudApi
+from .upm.upmcloudapi import UpmCloudApi
 from .upm.upmapi import UpmApi
 from .util import atlassian_jar as jar
 from .util import pathutil
@@ -77,7 +77,7 @@ def main():
                 settings.update(yaml.safe_load(stream))
             except yaml.YAMLError:
                 logging.warning("Looks like your configuration file is not yaml, the file will be ignored")
-            except Exception as e: 
+            except Exception as e:
                 logging.warning("Config %s failed to read and will be ignored. %s", config_location, e)
 
     cmd: DefaultGroup = typer.main.get_command(app)
@@ -346,6 +346,9 @@ def install_cloud(base_url: furl.furl, plugin_uri: furl.furl):
         logging.error("UPM Token couldn't be retrieved; are your credentials correct?")
         sys.exit(1)
 
+    displayed_base_url = base_url.copy().remove(username=True, password=True)
+    logging.info(f"{plugin_uri} will be uploaded to {displayed_base_url}")
+
     try:
         response = cloud.install_plugin(plugin_uri, token)
         with TqdmUpTo(total=100) as progress:
@@ -404,8 +407,6 @@ def install_server(
         logging.error("An error occured while downloading an app from the marketplace %s", e)
         sys.exit(1)
 
-    displayed_base_url = base_url.copy().remove(username=True, password=True)
-
     if interactive:
         confirm = input("Do you really want to upload and install the plugin? (y/N) ")
         if confirm.lower() != "y":
@@ -430,6 +431,8 @@ def install_server(
                 logging.error("An error occurred. The plugin could not be uninstalled.")
         except (FileNotFoundError, zipfile.BadZipFile, KeyError, pathutil.PluginKeyNotFoundError):
             logging.error("Could not get the plugin key of the supplied jar - are you sure you want to upload a plugin, mate?")
+
+    displayed_base_url = base_url.copy().remove(username=True, password=True)
     logging.info(f"{pathlib.Path(plugin_path).name} will be uploaded to {displayed_base_url}")
 
     try:
