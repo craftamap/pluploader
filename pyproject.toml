@@ -33,6 +33,7 @@ beautifulsoup4 = "^4.9.3"
 pydantic = "^1.6.1"
 lxml = "^4.5.2"
 html5lib = "^1.1"
+debugpy = "^1.1.0"
 
 [tool.poetry.dev-dependencies]
 black = "^19.10b0"

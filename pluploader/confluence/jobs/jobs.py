@@ -51,7 +51,7 @@ class JobsScraper:
             - list of jobs (typing.List[Job])
             - token(str)
         """
-        request_url = self.base_url.copy()
+        request_url: furl = self.base_url.copy()
         request_url.add(path=self.LIST_JOBS_ACTION_URL)
         response = self.session.get(request_url)
 
@@ -116,10 +116,10 @@ class JobsScraper:
         response = self.session.get(request_url)
         return response.status_code == 200
 
-    def disable_job(self, base_url: furl, job: Job, token: typing.Optional[str] = None,) -> bool:
+    def disable_job(self, job: Job, token: typing.Optional[str] = None,) -> bool:
         if token is None:
             token = self.get_token()
-        request_url = base_url.copy()
+        request_url = self.base_url.copy()
         request_url.add(path=self.DISABLE_JOB_ACTION_URL)
         request_url.add(args={"group": job.group, "id": job.id, "atl_token": token})
         response = self.session.get(request_url)
@@ -127,13 +127,12 @@ class JobsScraper:
 
     def enable_job(
         self,
-        base_url: furl,
         job: Job,
         token: typing.Optional[str] = None,
     ) -> bool:
         if token is None:
             token = self.get_token()
-        request_url = base_url.copy()
+        request_url = self.base_url.copy()
         request_url.add(path=self.ENABLE_JOB_ACTION_URL)
         request_url.add(args={"group": job.group, "id": job.id, "atl_token": token})
         response = requests.get(request_url)

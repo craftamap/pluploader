@@ -6,6 +6,7 @@ import requests
 import typer
 import typing
 from .confluence.jobs import jobs
+from .confluence.jobs.jobs import JobsScraper
 from colorama import Fore
 
 app_job = typer.Typer()
@@ -27,20 +28,22 @@ def job_list(
     """ Confluence only, list all jobs available
     """
     try:
+        jobs_scraper = JobsScraper(ctx.obj.get("base_url"))
+
         logging.info("Getting jobs... This can take some time - please wait!")
-        _job_list, token, cookies = jobs.list_jobs(ctx.obj.get("base_url"))
+        _job_list, token = jobs_scraper.list_jobs()
 
         columns, _ = shutil.get_terminal_size(fallback=(80, 24))
 
         width = int((columns - 17) / 4)
         print(
             f"{Fore.LIGHTBLACK_EX}{'idx':3} {'name':{width}} {'group':{width*2}} {'id':{width}} {'STS':3} {'RUNBL':5}"
-            "{Fore.RESET}"
+            f"{Fore.RESET}"
         )
         if print_all_infos:
             print(
                 f"{Fore.LIGHTBLACK_EX}        {'last execution':{width}} {'next execution':{width}} {'avg duration':7}"
-                "{Fore.RESET}"
+                f"{Fore.RESET}"
             )
         print(f"{Fore.LIGHTBLACK_EX}{'='*columns}{Fore.RESET}")
         for idx, job in enumerate(_job_list):
@@ -130,14 +133,14 @@ def job_run(
     """
     try:
         logging.info("Getting jobs... This can take some time - please wait!")
-        base_url = ctx.obj.get("base_url")
-        _job_list, token, cookies = jobs.list_jobs(base_url)
+        jobs_scraper = JobsScraper(ctx.obj.get("base_url"))
+        _job_list, token = jobs_scraper.list_jobs()
 
         selected_job = _select_job(_job_list, idx, id, group)
 
         logging.info(f"Job {selected_job.name} ({selected_job.id}) selected - Trying to run the job now")
 
-        success = jobs.run_job(base_url, selected_job, token, cookies)
+        success = jobs_scraper.run_job(selected_job, token)
         if success:
             logging.info("Started job successfully!")
         else:
@@ -160,9 +163,10 @@ def job_info(
     group: typing.Optional[str] = typer.Option(None),
 ):
     try:
+        jobs_scraper = JobsScraper(ctx.obj.get("base_url"))
+
         logging.info("Getting jobs... This can take some time - please wait!")
-        base_url = ctx.obj.get("base_url")
-        _job_list, token, cookies = jobs.list_jobs(base_url)
+        _job_list, token = jobs_scraper.list_jobs()
 
         selected_job = _select_job(_job_list, idx, id, group)
         for key, value in selected_job.__dict__.items():
@@ -186,15 +190,16 @@ def job_disable(
     """ Confluence only, disable a specified job
     """
     try:
+        jobs_scraper = JobsScraper(ctx.obj.get("base_url"))
+
         logging.info("Getting jobs... This can take some time - please wait!")
-        base_url = ctx.obj.get("base_url")
-        _job_list, token, cookies = jobs.list_jobs(base_url)
+        _job_list, token = jobs_scraper.list_jobs()
 
         selected_job = _select_job(_job_list, idx, id, group)
 
         logging.info(f"Job {selected_job.name} ({selected_job.id}) selected - Trying to disable the job now")
 
-        success = jobs.disable_job(base_url, selected_job, token, cookies)
+        success = jobs.disable_job(selected_job, token)
         if success:
             logging.info("Disabled job successfully!")
         else:
@@ -218,15 +223,16 @@ def job_enable(
     """ Confluence only, enable a specified job
     """
     try:
+        jobs_scraper = JobsScraper(ctx.obj.get("base_url"))
+
         logging.info("Getting jobs... This can take some time - please wait!")
-        base_url = ctx.obj.get("base_url")
-        _job_list, token, cookies = jobs.list_jobs(base_url)
+        _job_list, token = jobs_scraper.list_jobs()
 
         selected_job = _select_job(_job_list, idx, id, group)
 
         logging.info(f"Job {selected_job.name} ({selected_job.id}) selected - Trying to enable the job now")
 
-        success = jobs.enable_job(base_url, selected_job, token, cookies)
+        success = jobs_scraper.enable_job(selected_job, token)
         if success:
             logging.info("Enabled job successfully!")
         else:

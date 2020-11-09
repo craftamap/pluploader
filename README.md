@@ -78,10 +78,10 @@ atlas-mvn clean package && pluploader
 pluploader supports downloading apps from the atlassian marketplace to your local 
 machine and installing them afterwards. You need to supply either `--mpac-key`,
 which is the normal addon-key, or `--mpac-id` (experimental), which is the 
-numeric id of an marketplace id ( )
+numeric id of an marketplace id (72307 https://marketplace.atlassian.com/apps/72307)
 
 ```
-
+pluploader --mpac-key com.atlassian.confluence.extra.team-calendars
 ```
 
 **NOTE**: 
@@ -91,7 +91,7 @@ If you specify one of the global options, you need to add the `install`-command:
 pluploader --base-url https://your-confluence.com:8090 install
 ```
 
-You can work around this by using the configuration file.
+You can work around this by using the configuration file or by using environment variables.
 
 ### Managing plugins
 
@@ -242,7 +242,7 @@ You can also specify username, password and base url by using `PLUP_USER`,
 
 ## Development
 
-pluploader uses poetry as it's package manager.
+pluploader uses [poetry](https://python-poetry.org/) as it's package manager. As a command line argument parser, [Typer](https://typer.tiangolo.com/) is used.
 
 ## FAQ
 
