@@ -1,6 +1,6 @@
 ## pluploader
 
-[![PyPI version](https://badge.fury.io/py/pluploader.svg)](https://badge.fury.io/py/pluploader) ![Upload Python Package](https://github.com/livelyapps/pluploader/workflows/Upload%20Python%20Package/badge.svg)
+![PyPI version](https://img.shields.io/pypi/v/pluploader?style=flat-square) ![Upload Python Package](https://img.shields.io/github/workflow/status/livelyapps/pluploader/Python%20package/master?style=flat-square)
 
 A simple command line plugin uploader/installer/manager for atlassian product 
 server instances (Confluence/Jira) written in python(3).
