@@ -8,4 +8,4 @@ RUN pip3 install pluploader==$PL_VERSION
 
 WORKDIR /workdir
 
-ENTRYPOINT [ "pluploader" ]%
+ENTRYPOINT [ "pluploader" ]
