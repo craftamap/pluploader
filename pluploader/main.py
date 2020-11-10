@@ -22,8 +22,8 @@ from .license import app_license
 from .mpac import download
 from .mpac.exceptions import MpacAppNotFoundError, MpacAppVersionNotFoundError
 from .safemode import app_safemode
-from .upm.upmcloudapi import UpmCloudApi
 from .upm.upmapi import UpmApi
+from .upm.upmcloudapi import UpmCloudApi
 from .util import atlassian_jar as jar
 from .util import pathutil
 

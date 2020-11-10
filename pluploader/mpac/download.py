@@ -6,8 +6,7 @@ import typing
 import requests
 from furl import furl
 
-from . import scraper
-from . import rest
+from . import rest, scraper
 
 
 def _download_file_to_tmp_dir(url: furl) -> os.PathLike:

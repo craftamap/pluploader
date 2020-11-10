@@ -4,7 +4,9 @@ server applications.
 
 import pathlib
 from zipfile import ZipFile
+
 from bs4 import BeautifulSoup
+
 from .pathutil import PluginKeyNotFoundError
 
 

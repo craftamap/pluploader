@@ -4,7 +4,8 @@
 import requests
 from bs4 import BeautifulSoup
 from furl import furl
-from .exceptions import (MpacAppNotFoundError, MpacAppVersionNotFoundError)
+
+from .exceptions import MpacAppNotFoundError, MpacAppVersionNotFoundError
 
 VERSION_HISTORY_URL = "https://marketplace.atlassian.com/apps/{}/WILDCARD/version-history"
 

@@ -1,13 +1,14 @@
 import logging
 import shutil
 import sys
+import typing
 
 import requests
 import typer
-import typing
+from colorama import Fore
+
 from .confluence.jobs import jobs
 from .confluence.jobs.jobs import JobsScraper
-from colorama import Fore
 
 app_job = typer.Typer()
 

@@ -1,8 +1,16 @@
-## pluploader
+<!-- markdownlint-configure-file
+{
+  "no-bare-urls": false,
+  "no-trailing-punctuation": false,
+  "line-length": false
+}
+-->
+
+# pluploader
 
 ![PyPI version](https://img.shields.io/pypi/v/pluploader?style=flat-square) ![Upload Python Package](https://img.shields.io/github/workflow/status/livelyapps/pluploader/Python%20package/master?style=flat-square)
 
-A simple command line plugin uploader/installer/manager for atlassian product 
+A simple command line plugin uploader/installer/manager for atlassian product
 server instances (Confluence/Jira) written in python(3).
 
 ## Installation
@@ -11,7 +19,7 @@ Regulary tested on Linux (Arch Linux), MacOS and Windows 10.
 
 ### pip (recommended)
 
-```
+```bash
 pip3 install pluploader
 ```
 
@@ -28,11 +36,12 @@ docker pull docker.pkg.github.com/livelyapps/pluploader/pluploader:latest
 
 pluploader can then be run by executing
 
-```
+```bash
 docker run -v "$(pwd)":/workdir -it craftamap/pluploader:v0.4.1
 ```
 
 ## Usage
+
 For a in-depth explanation, see `pluploader --help`
 
 > ℹ This documentation describes the master branch, and not (necessarily) the latest release.
@@ -40,6 +49,7 @@ For a in-depth explanation, see `pluploader --help`
 ### Global Options
 
 You can specify various global options:
+
 - `--base-url <base-url>`, default: `http://localhost:8090`
 - `--user <username>`, default: `admin`
 - `--password <password>`, default: `admin`  
@@ -54,40 +64,40 @@ All Global Options can be overwritten by using a configuration file. See more in
 
 If you are in a maven project, the basic usage is fairly simple. Just type:
 
-```
+```bash
 pluploader --user admin --password admin
 ```
 
-The pluploader then uploads and enables the current artifact specified in the 
+The pluploader then uploads and enables the current artifact specified in the
 pom.xml
 
 If you are not in a maven directory currently, but you want to upload a specific
 file, you can also use the `-f plugin.jar` flag.
 
-If you want to confirm your upload, you can also use the `-i` / 
+If you want to confirm your upload, you can also use the `-i` /
 `--interactive` flag.
 
 It is recommended to use the pluploader with maven. The usage looks like:
 
-```
+```bash
 atlas-mvn clean package && pluploader
 ```
 
 #### Installing apps from the marketplace
 
-pluploader supports downloading apps from the atlassian marketplace to your local 
+pluploader supports downloading apps from the atlassian marketplace to your local
 machine and installing them afterwards. You need to supply either `--mpac-key`,
-which is the normal addon-key, or `--mpac-id` (experimental), which is the 
+which is the normal addon-key, or `--mpac-id` (experimental), which is the
 numeric id of an marketplace id (72307 https://marketplace.atlassian.com/apps/72307)
 
-```
+```bash
 pluploader --mpac-key com.atlassian.confluence.extra.team-calendars
 ```
 
-**NOTE**: 
+**NOTE**:
 If you specify one of the global options, you need to add the `install`-command:
 
-```
+```bash
 pluploader --base-url https://your-confluence.com:8090 install
 ```
 
@@ -110,7 +120,7 @@ indicates that the plugin is disabled.
 In order to retrieve more information about a specific plugin, you can use the
 command `info`.
 
-```
+```bash
 pluploader info com.example.plugin.key
 ```
 
@@ -124,19 +134,20 @@ The commands `enable`, `disable` or `uninstall` follow the same syntax.
 pluploader also supports disabling or enabling all apps using Safe Mode.
 
 To retrieve the status if safe-mode is enabled at the moment, use
-```
+
+```bash
 pluploader safe-mode status
 ```
 
-You can enable and disable safe mode by using 
+You can enable and disable safe mode by using
 
-```
+```bash
 pluploader safe-mode enable
 ```
 
 And
 
-```
+```bash
 pluploader safe-mode disable
 # OR
 pluploader safe-mode disable --keep-state
@@ -148,7 +159,7 @@ You can also use the pluploader to get and set licenses for your plugins.
 
 To get the current license information:
 
-```
+```bash
 pluploader license info com.example.plugin.key
 ```
 
@@ -159,9 +170,9 @@ pluploader license update com.example.plugin.key --license "AAA..."
 ```
 
 > ℹ Pro tip: Use `xargs` to read a license from a file by using
-> 
+>
 > ```bash
-> cat license.txt | xargs pluploader license update --license 
+> cat license.txt | xargs pluploader license update --license
 > ```
 
 You can also apply [timebomb licenses](https://developer.atlassian.com/platform/marketplace/timebomb-licenses-for-testing-server-apps/)
@@ -169,7 +180,7 @@ You can also apply [timebomb licenses](https://developer.atlassian.com/platform/
 by using
 
 ```bash
-pluploader license timebomb com.example.plugin.key --timebomb threehours 
+pluploader license timebomb com.example.plugin.key --timebomb threehours
 ```
 
 You can choose between 3 hours (threehours), 60 seconds (sixtyseconds) and
@@ -178,12 +189,12 @@ You can choose between 3 hours (threehours), 60 seconds (sixtyseconds) and
 To remove an applied license, you can use:
 
 ```bash
-pluploader license delete com.example.plugin.key 
+pluploader license delete com.example.plugin.key
 ```
 
 ### Scheduled Jobs (Confluence - Experimental)
 
-> ℹ This feature is currently experimental and only works in specific version of 
+> ℹ This feature is currently experimental and only works in specific version of
 > Confluence (tested on Confluence 7.5).
 
 Pluploader can also be used to retrieve information about confluence jobs and
@@ -191,45 +202,47 @@ execute them.
 
 You can grab a list of all jobs by running
 
-```
+```bash
 pluploader job list
 ```
 
-Available options are: 
- - `--hide-default` - Hides confluence internal jobs
- - `--print-all-infos` - print more informations
+Available options are:
+
+- `--hide-default` - Hides confluence internal jobs
+- `--print-all-infos` - print more informations
 
 You can also run jobs by running
 
-```
+```bash
 pluploader job run
 ```
 
 Get more information about a job by running
 
-```
+```bash
 pluploader job info
 ```
 
 And disable or enable jobs by running
-```
-pluploader job enable 
+
+```bash
+pluploader job enable
 # AND
 pluploader job disable
 ```
 
-A job can be specified by either using `--id <job id>` or by using 
-`--idx <job index in list>`. If no job is specified, you will be asked 
+A job can be specified by either using `--id <job id>` or by using
+`--idx <job index in list>`. If no job is specified, you will be asked
 interactively.
 
 ### Configuration
 
-If you don't want to write the username or password (or any other global 
-parameter) each time, you can use a filed called `.pluprc`, either placed in 
-your current maven project or/and in your home directory. A example looks like 
+If you don't want to write the username or password (or any other global
+parameter) each time, you can use a filed called `.pluprc`, either placed in
+your current maven project or/and in your home directory. A example looks like
 this:
 
-```
+```bash
 base_url: https://example.com:8090
 user: admin
 password: admin
@@ -237,7 +250,7 @@ password: admin
 
 ### Environment variables
 
-You can also specify username, password and base url by using `PLUP_USER`, 
+You can also specify username, password and base url by using `PLUP_USER`,
 `PLUP_PASSWORD` and `PLUP_BASEURL`.
 
 ## Development
@@ -248,7 +261,7 @@ pluploader uses [poetry](https://python-poetry.org/) as it's package manager. As
 
 ### Why would I use the pluploader over X?
 
-Of course, you can use whatever tool you want to. 
+Of course, you can use whatever tool you want to.
 
 ### Why would I use the pluploader over the UPM?
 

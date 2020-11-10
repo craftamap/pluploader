@@ -1,8 +1,9 @@
+import logging
+import sys
+
+import requests
 import typer
 from colorama import Fore
-import logging
-import requests
-import sys
 
 from .upm.upmapi import UpmApi
 
