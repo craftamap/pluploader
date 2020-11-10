@@ -52,7 +52,37 @@ class AddonVersion:
         )
 
 
-def get_app_version(addonKey: str, version: str = "latest", hosting: str = "server"):
+@dataclasses.dataclass
+class Asset:
+    @dataclasses.dataclass
+    class AssetFileInfo:
+        logical_file_name: str
+        size: str
+
+        @classmethod
+        def decode(cls: typing.ClassVar["Asset.AssetFileInfo"], obj: typing.Dict[str, typing.Any]) -> "Asset.AssetFileInfo":
+            return cls(logical_file_name=obj.get("logicalFileName"), size=obj.get("size"))
+
+    @dataclasses.dataclass
+    class AssetLink:
+        href: furl
+
+        @classmethod
+        def decode(cls: typing.ClassVar["Asset.AssetLink"], obj: typing.Dict[str, typing.Any]) -> "Asset.AssetLink":
+            return cls(href=furl(obj.get("href")))
+
+    links: typing.Dict[str, AssetLink]
+    file_info: AssetFileInfo
+
+    @classmethod
+    def decode(cls: typing.ClassVar["Asset"], obj: typing.Dict[str, typing.Any]) -> "Asset":
+        return cls(
+            links={k: cls.AssetLink.decode(v) for (k, v) in obj.get("_links").items()},
+            file_info=cls.AssetFileInfo.decode(obj.get("fileInfo")),
+        )
+
+
+def get_app_version(addonKey: str, version: str = "latest", hosting: str = "server") -> AddonVersion:
     """ Choosing "server" as default hosting option for now... We propably need to change this
     in 2022?, when you people will stop publishing server versions
     """
@@ -68,3 +98,14 @@ def get_app_version(addonKey: str, version: str = "latest", hosting: str = "serv
         raise MpacAppVersionNotFoundError(url)
 
     return AddonVersion.decode(response.json())
+
+
+def get_binary_from_app_version(addon_version: AddonVersion) -> Asset:
+    url: furl = addon_version.links.artifact.href.copy()
+    url.set(origin=BASE_URL.origin)
+    response = requests.get(url)
+
+    if not response.ok:
+        raise MpacAppVersionNotFoundError(url)
+
+    return Asset.decode(response.json())

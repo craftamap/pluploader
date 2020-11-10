@@ -28,8 +28,9 @@ def _download_file_to_tmp_dir(url: furl) -> os.PathLike:
 
 def download_app_by_app_key(app_key: str, version: str = "latest") -> os.PathLike:
     app = rest.get_app_version(app_key, version)
-    download_link = app.links.artifact.href
-    download_link.origin = "https://marketplace.atlassian.com"
+    asset = rest.get_binary_from_app_version(app)
+
+    download_link = asset.links.get("binary").href
     return _download_file_to_tmp_dir(download_link)
 
 
