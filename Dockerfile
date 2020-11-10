@@ -1,6 +1,6 @@
-ARG PL_VERSION 
+FROM python:3.8
 
-FROM python:3.9
+ARG PL_VERSION=">=0.3"
 
 RUN mkdir /workdir
 
