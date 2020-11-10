@@ -3,8 +3,8 @@ import typing
 import requests
 from furl import furl
 
-from .upmapi import PluginDto, UpmApi
 from .exceptions import UploadFailedException
+from .upmapi import PluginDto, UpmApi
 
 
 class UpmCloudApi(UpmApi):
