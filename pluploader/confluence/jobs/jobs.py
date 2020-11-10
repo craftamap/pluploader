@@ -125,11 +125,7 @@ class JobsScraper:
         response = self.session.get(request_url)
         return response.status_code == 200
 
-    def enable_job(
-        self,
-        job: Job,
-        token: typing.Optional[str] = None,
-    ) -> bool:
+    def enable_job(self, job: Job, token: typing.Optional[str] = None,) -> bool:
         if token is None:
             token = self.get_token()
         request_url = self.base_url.copy()
