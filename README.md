@@ -1,3 +1,11 @@
+<!-- markdownlint-configure-file
+{
+  "no-bare-urls": false,
+  "no-trailing-punctuation": false,
+  "line-length": false
+}
+-->
+
 # pluploader
 
 ![PyPI version](https://img.shields.io/pypi/v/pluploader?style=flat-square) ![Upload Python Package](https://img.shields.io/github/workflow/status/livelyapps/pluploader/Python%20package/master?style=flat-square)
