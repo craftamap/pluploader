@@ -32,7 +32,7 @@ jobs:
         LINTER_RULES_PATH: .
         PYTHON_BLACK_CONFIG_FILE: pyproject.toml
         PYTHON_ISORT_CONFIG_FILE: pyproject.toml
-        VALIDATE_MARKDOWN: false
+        MARKDOWN_CONFIG_FILE: .github/linters/.markdown-lint.yml
     - name: Run pluploader --version
       run: |
         pip install .
