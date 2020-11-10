@@ -1,10 +1,10 @@
-FROM python:3.8
-
 ARG PL_VERSION 
+
+FROM python:3.9
 
 RUN mkdir /workdir
 
-RUN pip3 install pluploader==$PL_VERSION
+RUN pip3 install "pluploader==$PL_VERSION"
 
 WORKDIR /workdir
 
