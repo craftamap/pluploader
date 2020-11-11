@@ -187,7 +187,7 @@ python-versions = "*"
 version = "0.6"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "An implementation of the Debug Adapter Protocol for Python"
 name = "debugpy"
 optional = false
@@ -684,7 +684,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pytest-cov", "jaraco.test (>=3.2.0)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
 [metadata]
-content-hash = "8f542e8b7c990406e7519c1e7aa899dd4f4fcd6b4a7cb19a3454a361d4b27ee9"
+content-hash = "ce33f82e91a17ca9820db3f47863faed69eb18007fc8e25066fe327cf65c92fd"
 lock-version = "1.0"
 python-versions = "^3.6"
 
