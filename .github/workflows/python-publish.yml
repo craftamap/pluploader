@@ -42,4 +42,3 @@ jobs:
       run: docker push craftamap/pluploader:${{ github.event.release.tag_name }}
     - name: Push the latest Docker image
       run: docker push craftamap/pluploader:latest
-      if: ! {{github.event.release.prerelease}}
