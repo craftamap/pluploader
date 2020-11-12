@@ -37,6 +37,45 @@ class JobsScraper:
         self.base_url: furl = base_url
         self.session = requests.Session()
 
+    def __enter__(self) -> "JobsScraper":
+        self.login()
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        pass
+
+    def login(self):
+        # Let's try out the list_jobs_action_url -> If its successful, return, otherwise authenticate
+        request_url: furl = self.base_url.copy()
+        request_url.add(path=self.LIST_JOBS_ACTION_URL)
+        response = self.session.get(request_url)
+
+        soup = BeautifulSoup(response.content, "html5lib")
+        login_container = soup.select_one("#login-container")
+        if login_container is None:
+            # No login - let's check, if we are on the correct page
+            if soup.select_one("table#schedule-admin") is not None:
+                return
+            else:
+                # TODO: Specific exception
+                raise Exception("Expected login-page or jobs list, got None")
+        else:
+            login_url = self.base_url.copy()
+            login_url.add(path="/doauthenticate.action")
+            token = soup.select_one("meta#atlassian-token")["content"]
+            password = self.base_url.password
+            destination = self.LIST_JOBS_ACTION_URL
+            response = self.session.post(
+                login_url,
+                data={"atl_token": token, "password": password, "destination": destination, "authenticate": "Confirm"},
+            )
+
+            soup = BeautifulSoup(response.content, "html5lib")
+            if soup.select_one("table#schedule-admin") is not None:
+                return
+            else:
+                raise Exception("Login failed")
+
     def get_token(self) -> str:
         request_url = self.base_url.copy()
         request_url.add(path=self.LIST_JOBS_ACTION_URL)
