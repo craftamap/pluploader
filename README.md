@@ -87,6 +87,8 @@ atlas-mvn clean package && pluploader
 
 #### Installing apps from the marketplace
 
+![Uploading  gifs](.github/images/pluploader-demo-3.gif)
+
 pluploader supports downloading apps from the atlassian marketplace to your local
 machine and installing them afterwards. You need to supply either `--mpac-key`,
 which is the normal addon-key, or `--mpac-id` (experimental), which is the
@@ -106,6 +108,8 @@ pluploader --base-url https://your-confluence.com:8090 install
 You can work around this by using the configuration file or by using environment variables.
 
 ### Managing plugins
+
+![Managing plugins](pluploader-demo-2.gif)
 
 pluploader can also replace the usage of the universal plugin manager completely
 by using the subcommands `list`, `info`, `enable`, `disable`, and `uninstall`.
@@ -155,7 +159,9 @@ pluploader safe-mode disable
 pluploader safe-mode disable --keep-state
 ```
 
-### Licenses (Beta)
+### Licenses
+
+![Licenses Gif](.github/images/pluploader-demo-4.gif)
 
 You can also use the pluploader to get and set licenses for your plugins.
 
