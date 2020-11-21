@@ -109,7 +109,7 @@ You can work around this by using the configuration file or by using environment
 
 ### Managing plugins
 
-![Managing plugins](pluploader-demo-2.gif)
+![Managing plugins](.github/images/pluploader-demo-2.gif)
 
 pluploader can also replace the usage of the universal plugin manager completely
 by using the subcommands `list`, `info`, `enable`, `disable`, and `uninstall`.
