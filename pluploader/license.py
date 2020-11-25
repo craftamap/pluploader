@@ -6,8 +6,7 @@ import requests
 import typer
 
 from .upm.upmapi import UpmApi
-from .util import pathutil
-from .util import browser
+from .util import browser, pathutil
 
 app_license = typer.Typer()
 

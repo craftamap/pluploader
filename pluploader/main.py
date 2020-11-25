@@ -25,8 +25,7 @@ from .safemode import app_safemode
 from .upm.upmapi import UpmApi
 from .upm.upmcloudapi import UpmCloudApi
 from .util import atlassian_jar as jar
-from .util import pathutil
-from .util import browser
+from .util import browser, pathutil
 
 app = typer.Typer()
 
