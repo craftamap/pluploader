@@ -6,6 +6,7 @@ import typer
 from colorama import Fore
 
 from .upm.upmapi import UpmApi
+from .util import browser
 
 app_safemode = typer.Typer()
 
@@ -17,7 +18,9 @@ def safemode(ctx: typer.Context):
 
 
 @app_safemode.command("status")
-def safemode_status(ctx: typer.Context):
+def safemode_status(
+    ctx: typer.Context, web: bool = typer.Option(False, help="open upm in web browser after showing safemode status"),
+):
     """ prints out the safemode status """
     try:
         upm = UpmApi(ctx.obj.get("base_url"))
@@ -30,10 +33,14 @@ def safemode_status(ctx: typer.Context):
         logging.error("An error occured - check your credentials")
         logging.error(f"{e}")
         sys.exit(1)
+    if web:
+        browser.open_web_upm(ctx.obj.get("base_url"))
 
 
 @app_safemode.command("enable")
-def safemode_enable(ctx: typer.Context):
+def safemode_enable(
+    ctx: typer.Context, web: bool = typer.Option(False, help="open upm in web browser after showing safemode status"),
+):
     try:
         upm = UpmApi(ctx.obj.get("base_url"))
         success = upm.enable_disable_safemode(True)
@@ -48,10 +55,16 @@ def safemode_enable(ctx: typer.Context):
         logging.error("An error occured - check your credentials")
         logging.error("%s", exc)
         sys.exit(1)
+    if web:
+        browser.open_web_upm(ctx.obj.get("base_url"))
 
 
 @app_safemode.command("disable")
-def safemode_disable(ctx: typer.Context, keep_state: bool = typer.Option(False)):
+def safemode_disable(
+    ctx: typer.Context,
+    keep_state: bool = typer.Option(False),
+    web: bool = typer.Option(False, help="open upm in web browser after showing safemode status"),
+):
     try:
         upm = UpmApi(ctx.obj.get("base_url"))
         success = upm.enable_disable_safemode(False, keep_state)
@@ -69,3 +82,5 @@ def safemode_disable(ctx: typer.Context, keep_state: bool = typer.Option(False))
         logging.error("An error occured - check your credentials")
         logging.error("%s", exc)
         sys.exit(1)
+    if web:
+        browser.open_web_upm(ctx.obj.get("base_url"))

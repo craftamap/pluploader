@@ -5,7 +5,6 @@ import pathlib
 import sys
 import time
 import typing
-import webbrowser
 import zipfile
 
 import coloredlogs
@@ -27,6 +26,7 @@ from .upm.upmapi import UpmApi
 from .upm.upmcloudapi import UpmCloudApi
 from .util import atlassian_jar as jar
 from .util import pathutil
+from .util import browser
 
 app = typer.Typer()
 
@@ -144,17 +144,11 @@ def _base_url_from_args(base_url: str, user: str, password: str, port: typing.Op
     return base_url
 
 
-def _open_web_upm(base_url: furl.furl):
-    url: furl.furl = base_url / "plugins/servlet/upm"
-    url.password, url.username = "", ""
-    webbrowser.open(str(url))
-
-
 @app.command("list")
 def list_all(
     ctx: typer.Context,
     print_all: bool = typer.Option(False, help="prints all plugins instead of only user installed plugins"),
-    web: bool = typer.Option(False, help="open upm in web browser instead after listing all plugins"),
+    web: bool = typer.Option(False, help="open upm in web browser after listing all plugins"),
 ):
     """ Prints out basic plugin informations of all plugins"""
     try:
@@ -177,7 +171,7 @@ def list_all(
         plugin_infos = f"{status} {plugin.name[:25]:25}" + f" {str(plugin.version)[:13]:13} ({plugin.key})"
         print(plugin_infos)
     if web:
-        _open_web_upm(ctx.obj.get("base_url"))
+        browser.open_web_upm(ctx.obj.get("base_url"))
 
 
 @app.command("info")
@@ -210,14 +204,14 @@ def plugin_info(
         sys.exit(1)
     info.print_table(show_modules)
     if web:
-        _open_web_upm(ctx.obj.get("base_url"))
+        browser.open_web_upm(ctx.obj.get("base_url"))
 
 
 @app.command("enable")
 def enable_plugin(
     ctx: typer.Context,
     plugin: str = typer.Argument(None, help="the plugin key"),
-    web: bool = typer.Option(False, help="open list in web browser instead after enabling plugin"),
+    web: bool = typer.Option(False, help="open upm in web browser after enabling plugin"),
 ):
     """ Enables the specified plugin """
     if plugin is None:
@@ -241,13 +235,14 @@ def enable_plugin(
         sys.exit(1)
     response.print_table(False)
     if web:
-        _open_web_upm(ctx.obj.get("base_url"))
+        browser.open_web_upm(ctx.obj.get("base_url"))
 
 
 @app.command("disable")
 def disable_plugin(
-    ctx: typer.Context, plugin: str = typer.Argument(None, help="the plugin key"),
-    web: bool = typer.Option(False, help="open list in web browser instead after disabling plugin"),
+    ctx: typer.Context,
+    plugin: str = typer.Argument(None, help="the plugin key"),
+    web: bool = typer.Option(False, help="open upm in web browser after disabling plugin"),
 ):
     """ Disables the specified plugin """
     if plugin is None:
@@ -271,13 +266,14 @@ def disable_plugin(
         sys.exit(1)
     response.print_table(False)
     if web:
-        _open_web_upm(ctx.obj.get("base_url"))
+        browser.open_web_upm(ctx.obj.get("base_url"))
 
 
 @app.command("uninstall")
 def uninstall_plugin(
-    ctx: typer.Context, plugin: str = typer.Argument(None, help="the plugin key"),
-    web: bool = typer.Option(False, help="open list in web browser instead after uninstalling plugin"),
+    ctx: typer.Context,
+    plugin: str = typer.Argument(None, help="the plugin key"),
+    web: bool = typer.Option(False, help="open upm in web browser after uninstalling plugin"),
 ):
     """ Uninstalls a plugin
     """
@@ -305,7 +301,7 @@ def uninstall_plugin(
     else:
         logging.error("An error occurred. The plugin could not be uninstalled.")
     if web:
-        _open_web_upm(ctx.obj.get("base_url"))
+        browser.open_web_upm(ctx.obj.get("base_url"))
 
 
 @app.command("install")
@@ -347,7 +343,7 @@ To specify the version, use the == syntax: 1213057==3.10.1 will download 3.10.1"
     reinstall: typing.Optional[bool] = typer.Option(
         False, "--reinstall", help="Plugin will be uninstalled before it will be installed"
     ),
-    web: bool = typer.Option(False, help="open list in web browser instead after installing plugin"),
+    web: bool = typer.Option(False, help="open upm in web browser after installing plugin"),
 ):
     """installs the plugin of the current maven project or a specified one; you can also omit install
     """
@@ -359,7 +355,7 @@ To specify the version, use the == syntax: 1213057==3.10.1 will download 3.10.1"
     else:
         install_server(base_url, file, mpac_id, mpac_key, interactive, reinstall)
     if web:
-        _open_web_upm(ctx.obj.get("base_url"))
+        browser.open_web_upm(ctx.obj.get("base_url"))
 
 
 def install_cloud(base_url: furl.furl, plugin_uri: furl.furl):
