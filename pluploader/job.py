@@ -9,6 +9,7 @@ from colorama import Fore
 
 from .confluence.jobs import jobs
 from .confluence.jobs.jobs import JobsScraper
+from .util import browser
 
 app_job = typer.Typer()
 
@@ -25,6 +26,7 @@ def job_list(
     ctx: typer.Context,
     hide_default: typing.Optional[bool] = typer.Option(False),
     print_all_infos: typing.Optional[bool] = typer.Option(False),
+    web: bool = typer.Option(False, help='open "Scheduled Jobs" in web browser after showing list'),
 ):
     """ Confluence only, list all jobs available
     """
@@ -65,6 +67,8 @@ def job_list(
                         f"{job.avg_duration:{width}.{width}}",
                     )
                     print(f"{Fore.LIGHTBLACK_EX}{'-'*columns}{Fore.RESET}")
+        if web:
+            browser.open_web_jobs(ctx.obj.get("base_url"))
     except requests.exceptions.ConnectionError:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
@@ -129,6 +133,7 @@ def job_run(
     idx: typing.Optional[int] = typer.Option(None),
     id: typing.Optional[str] = typer.Option(None),
     group: typing.Optional[str] = typer.Option(None),
+    web: bool = typer.Option(False, help='open "Scheduled Jobs" in web browser after running job'),
 ):
     """ Confluence only, runs a specified job
     """
@@ -146,7 +151,8 @@ def job_run(
                 logging.info("Started job successfully!")
             else:
                 logging.error("Couldn't start job!")
-
+            if web:
+                browser.open_web_jobs(ctx.obj.get("base_url"))
     except requests.exceptions.ConnectionError:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
@@ -162,6 +168,7 @@ def job_info(
     idx: typing.Optional[int] = typer.Option(None),
     id: typing.Optional[str] = typer.Option(None),
     group: typing.Optional[str] = typer.Option(None),
+    web: bool = typer.Option(False, help='open "Scheduled Jobs" in web browser after showing info'),
 ):
     try:
         with JobsScraper(ctx.obj.get("base_url")) as jobs_scraper:
@@ -171,6 +178,8 @@ def job_info(
             selected_job = _select_job(_job_list, idx, id, group)
             for key, value in selected_job.__dict__.items():
                 print(f"{(key.replace('_', ' ') + ':'):25.25} {value}")
+                if web:
+                    browser.open_web_jobs(ctx.obj.get("base_url"))
     except requests.exceptions.ConnectionError:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
@@ -186,6 +195,7 @@ def job_disable(
     idx: typing.Optional[int] = typer.Option(None),
     id: typing.Optional[str] = typer.Option(None),
     group: typing.Optional[str] = typer.Option(None),
+    web: bool = typer.Option(False, help='open "Scheduled Jobs" in web browser after disabling job'),
 ):
     """ Confluence only, disable a specified job
     """
@@ -203,6 +213,8 @@ def job_disable(
             logging.info("Disabled job successfully!")
         else:
             logging.error("Couldn't disable job!")
+        if web:
+            browser.open_web_jobs(ctx.obj.get("base_url"))
     except requests.exceptions.ConnectionError:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
@@ -218,6 +230,7 @@ def job_enable(
     idx: typing.Optional[int] = typer.Option(None),
     id: typing.Optional[str] = typer.Option(None),
     group: typing.Optional[str] = typer.Option(None),
+    web: bool = typer.Option(False, help='open "Scheduled Jobs" in web browser after enabling job'),
 ):
     """ Confluence only, enable a specified job
     """
@@ -235,6 +248,8 @@ def job_enable(
                 logging.info("Enabled job successfully!")
             else:
                 logging.error("Couldn't enable job!")
+            if web:
+                browser.open_web_jobs(ctx.obj.get("base_url"))
     except requests.exceptions.ConnectionError:
         logging.error("Could not connect to host - check your base-url")
         sys.exit(1)
