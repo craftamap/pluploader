@@ -6,7 +6,7 @@ import requests
 import typer
 
 from .upm.upmapi import UpmApi
-from .util import pathutil
+from .util import browser, pathutil
 
 app_license = typer.Typer()
 
@@ -46,7 +46,11 @@ def safemode(ctx: typer.Context):
 
 
 @app_license.command("info")
-def info(ctx: typer.Context, plugin: str = typer.Argument(None, help="the plugin key")):
+def info(
+    ctx: typer.Context,
+    plugin: str = typer.Argument(None, help="the plugin key"),
+    web: bool = typer.Option(False, help="open upm in web browser after showing info"),
+):
     if plugin is None:
         try:
             plugin = pathutil.get_plugin_key_from_pom()
@@ -70,6 +74,8 @@ def info(ctx: typer.Context, plugin: str = typer.Argument(None, help="the plugin
         sys.exit(1)
     for key, value in license.__dict__.items():
         print(f"{(key.replace('_', ' ') + ':'):25.25} {value}")
+    if web:
+        browser.open_web_upm(ctx.obj.get("base_url"))
 
 
 @app_license.command("update")
@@ -77,6 +83,7 @@ def update(
     ctx: typer.Context,
     plugin: str = typer.Argument(None, help="the plugin key"),
     license: str = typer.Option(..., help="the license you want to update"),
+    web: bool = typer.Option(False, help="open upm in web browser after updating license"),
 ):
     if plugin is None:
         try:
@@ -99,11 +106,15 @@ def update(
         sys.exit(1)
     for key, value in license.__dict__.items():
         print(f"{(key.replace('_', ' ') + ':'):25.25} {value}")
+    if web:
+        browser.open_web_upm(ctx.obj.get("base_url"))
 
 
 @app_license.command("delete")
 def delete(
-    ctx: typer.Context, plugin: str = typer.Argument(None, help="the plugin key"),
+    ctx: typer.Context,
+    plugin: str = typer.Argument(None, help="the plugin key"),
+    web: bool = typer.Option(False, help="open upm in web browser after deleting license"),
 ):
     if plugin is None:
         try:
@@ -130,6 +141,8 @@ def delete(
         "When the delete command is run, the old license is shown. Please run pluploader license info to ensure that"
         " removing the license was successful."
     )
+    if web:
+        browser.open_web_upm(ctx.obj.get("base_url"))
 
 
 @app_license.command("timebomb")
@@ -137,6 +150,7 @@ def timebomb(
     ctx: typer.Context,
     plugin: str = typer.Argument(None, help="the plugin key"),
     timebomb: TimebombLicensesEnum = typer.Option(TimebombLicensesEnum.threehours, case_sensitive=False),
+    web: bool = typer.Option(False, help="open upm in web browser applying timebomb license"),
 ):
     if plugin is None:
         try:
@@ -159,3 +173,5 @@ def timebomb(
         sys.exit(1)
     for key, value in license.__dict__.items():
         print(f"{(key.replace('_', ' ') + ':'):25.25} {value}")
+    if web:
+        browser.open_web_upm(ctx.obj.get("base_url"))

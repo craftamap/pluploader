@@ -4,7 +4,7 @@ ARG PL_VERSION=">=0.3"
 
 RUN mkdir /workdir
 
-RUN pip3 install "pluploader==$PL_VERSION"
+RUN pip3 install --no-cache-dir "pluploader==$PL_VERSION"
 
 WORKDIR /workdir
 
