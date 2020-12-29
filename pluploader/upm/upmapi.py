@@ -5,8 +5,9 @@ import dataclasses
 import json
 import typing
 
+from rich.table import Table
+from rich.console import Console
 import requests
-from colorama import Fore
 from furl import furl
 from packaging import version
 
@@ -52,18 +53,29 @@ class PluginDto:
     def print_table(self, print_modules: bool):
         """Prints table view of plugin information
         """
-        for key, value in self.__dict__.items():
-            if key == "modules":
-                if print_modules:
-                    print(f"{(key + ':'):20}")
-                    for module in value:
-                        if module.enabled:
-                            status = f"{Fore.GREEN}✓{Fore.RESET}"
-                        else:
-                            status = f"{Fore.YELLOW}!{Fore.RESET}"
-                        print(f"  {status} {module.name[:20]:20} {module.key}")
+        grid = Table.grid(expand=True)
+        grid.add_column(style="blue")
+        grid.add_column()
+        grid.add_row("Key:", self.key)
+        grid.add_row("Name:", self.name)
+        grid.add_row("Version:", self.version)
+        grid.add_row("enabled:", str(self.enabled))
+        grid.add_row("userInstalled:", str(self.userInstalled))
+        grid.add_row("Description:", self.description)
+
+        modules = Table("", "Name", "Key", title="modules")
+        for module in self.modules:
+            if module.enabled:
+                status = "[green]✓[reset]"
             else:
-                print(f"{(key + ':'):15} {value}")
+                status = "[yellow]![reset]"
+            modules.add_row(status, module.name, module.key)
+
+        console = Console()
+        console.print(grid)
+        if print_modules:
+            console.print()
+            console.print(modules)
 
     @classmethod
     def decode(cls, obj: dict) -> "PluginDto":

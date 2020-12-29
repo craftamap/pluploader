@@ -207,7 +207,9 @@ def plugin_info(
         logging.error("An error occured - check your credentials")
         logging.error("%s", exc)
         sys.exit(1)
+
     info.print_table(show_modules)
+
     if web:
         browser.open_web_upm(ctx.obj.get("base_url"))
 
