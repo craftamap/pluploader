@@ -22,7 +22,6 @@ colorama = "^0.4.3"
 configargparse = "^1.2.3"
 furl = "^2.1.0"
 PyYAML = "^5.3.1"
-coloredlogs = "^14.0"
 packaging = "^20.4"
 importlib-metadata = "^1.7.0"
 dataclasses = {version=">=0.7,<0.9", python = "~3.6"}

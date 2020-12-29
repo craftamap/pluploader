@@ -7,13 +7,13 @@ import time
 import typing
 import zipfile
 
-import coloredlogs
 import furl
 import requests
 import typer
 import yaml
 from click_default_group import DefaultGroup
 from colorama import Fore
+from rich.logging import RichHandler
 from rich.progress import BarColumn, Progress
 
 from . import __version__
@@ -26,6 +26,9 @@ from .upm.upmapi import UpmApi
 from .upm.upmcloudapi import UpmCloudApi
 from .util import atlassian_jar as jar
 from .util import browser, pathutil
+
+FORMAT = "%(message)s"
+logging.basicConfig(level="INFO", format=FORMAT, datefmt="[%X]", handlers=[RichHandler(markup=True, show_path=False)])
 
 app = typer.Typer()
 
@@ -46,9 +49,6 @@ LOGO = f"""
 {Fore.YELLOW}          )){Fore.GREEN}|||||||{Fore.RED}((
 {Fore.YELLOW}            {Fore.RED}/{Fore.GREEN}|||||{Fore.YELLOW}\\
 {Fore.RESET}"""
-
-coloredlogs.install(level="DEBUG")
-coloredlogs.install(fmt="%(asctime)s %(levelname)s %(message)s")
 
 
 def main():
@@ -393,9 +393,9 @@ def install_cloud(base_url: furl.furl, plugin_uri: furl.furl):
         sys.exit(1)
 
     if plugin and plugin.enabled:
-        status = f"{Fore.GREEN}enabled{Fore.RESET}!"
+        status = "[green]enabled[reset]!"
     else:
-        status = f"{Fore.RED}disabled{Fore.RESET}!"
+        status = "[red]disabled[reset]!"
     logging.info(f"plugin installed and {status}")
 
 
@@ -495,10 +495,10 @@ def install_server(
             file.close()
 
     if previous_request["enabled"]:
-        status = f"{Fore.GREEN}enabled{Fore.RESET}!"
+        status = "[green]enabled[reset]!"
     else:
         status = (
-            f"{Fore.RED}disabled{Fore.RESET}! \n"
+            "[red]disabled[reset]! \n"
             "You should check the logs of your Atlassian host to find out why your plugin was disabled."
         )
 
