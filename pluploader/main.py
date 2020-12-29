@@ -14,6 +14,8 @@ import yaml
 from click_default_group import DefaultGroup
 from colorama import Fore
 from rich.logging import RichHandler
+from rich.console import Console
+from rich.table import Table
 from rich.progress import BarColumn, Progress
 
 from . import __version__
@@ -160,15 +162,19 @@ def list_all(
         logging.error("An error occured - check your credentials")
         logging.error("%s", exc)
         sys.exit(1)
-    print(f"  {'Name':25} {'Version':13} {'Plugin Key':50}")
+    table = Table()
+    table.add_column("")
+    table.add_column("Name")
+    table.add_column("Version")
+    table.add_column("Plugin Key", no_wrap=True)
     for plugin in all_plugins:
         if plugin.enabled:
-            status = f"{Fore.GREEN}✓{Fore.RESET}"
+            status = "[green]✓[reset]"
         else:
-            status = f"{Fore.YELLOW}!{Fore.RESET}"
-
-        plugin_infos = f"{status} {plugin.name[:25]:25}" + f" {str(plugin.version)[:13]:13} ({plugin.key})"
-        print(plugin_infos)
+            status = "[yellow]![reset]"
+        table.add_row(status, plugin.name, plugin.version, plugin.key)
+    console = Console()
+    console.print(table)
     if web:
         browser.open_web_upm(ctx.obj.get("base_url"))
 
