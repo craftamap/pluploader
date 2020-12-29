@@ -13,10 +13,10 @@ import typer
 import yaml
 from click_default_group import DefaultGroup
 from colorama import Fore
-from rich.logging import RichHandler
 from rich.console import Console
-from rich.table import Table
+from rich.logging import RichHandler
 from rich.progress import BarColumn, Progress
+from rich.table import Table
 
 from . import __version__
 from .job import app_job

@@ -5,11 +5,11 @@ import dataclasses
 import json
 import typing
 
-from rich.table import Table
-from rich.console import Console
 import requests
 from furl import furl
 from packaging import version
+from rich.console import Console
+from rich.table import Table
 
 
 @dataclasses.dataclass()
