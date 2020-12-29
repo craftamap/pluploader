@@ -14,7 +14,7 @@ import typer
 import yaml
 from click_default_group import DefaultGroup
 from colorama import Fore
-from tqdm import tqdm
+from rich.progress import BarColumn, Progress
 
 from . import __version__
 from .job import app_job
@@ -373,12 +373,16 @@ def install_cloud(base_url: furl.furl, plugin_uri: furl.furl):
 
     try:
         response = cloud.install_plugin(plugin_uri, token)
-        with TqdmUpTo(total=100) as progress:
+        with Progress(
+            "[progress.description]{task.description}",
+            BarColumn(bar_width=None),
+            "[progress.percentage]{task.percentage:>3.0f}%",
+        ) as pbar:
             percentage = 0
-            progress.update_to(percentage)
+            pbar.update(advance=percentage)
             while percentage != 100:
                 percentage, plugin = cloud.install_plugin_get_current_progress(response)
-                progress.update(percentage)
+                pbar.update(advance=percentage)
                 if percentage != 100:
                     time.sleep(0.1)
     except requests.exceptions.RequestException as e:
@@ -469,12 +473,16 @@ def install_server(
     try:
         with open(plugin_path, "rb") as plugin_file:
             files = {"plugin": plugin_file}
-            with TqdmUpTo(total=100) as pbar:
-                pbar.update_to(0)
+            with Progress(
+                "[progress.description]{task.description}",
+                "\[[blue]{task.percentage:>3.0f}%[reset]]",
+                BarColumn(bar_width=None, complete_style="blue", finished_style="blue"),
+            ) as pbar:
+                task = pbar.add_task("[blue]Installing...", total=100)
                 progress, previous_request = upm.upload_plugin(files, token)
                 while progress != 100:
                     progress, previous_request = upm.get_current_progress(previous_request)
-                    pbar.update_to(progress)
+                    pbar.update(task, completed=progress)
                     time.sleep(0.1)
     except requests.exceptions.RequestException:
         logging.error("An error occured while uploading plugin")
@@ -505,23 +513,6 @@ def install_server(
             " importing services that are not properly defined in your atlassian-plugin.xml."
         )
         logging.error("Check the logs of your Atlassian host to find out more.")
-
-
-class TqdmUpTo(tqdm):
-    """Provides `update_to(n)` which uses `tqdm.update(delta_n)`."""
-
-    def update_to(self, b=1, bsize=1, tsize=None):
-        """
-        b  : int, optional
-            Number of blocks transferred so far [default: 1].
-        bsize  : int, optional
-            Size of each block (in tqdm units) [default: 1].
-        tsize  : int, optional
-            Total size (in tqdm units). If [default: None] remains unchanged.
-        """
-        if tsize is not None:
-            self.total = tsize
-        self.update(b * bsize - self.n)  # will also set self.n = b * bsize
 
 
 if __name__ == "__main__":
