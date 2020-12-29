@@ -483,7 +483,7 @@ def install_server(
             files = {"plugin": plugin_file}
             with Progress(
                 "[progress.description]{task.description}",
-                "\[[blue]{task.percentage:>3.0f}%[reset]]",
+                "[[blue]{task.percentage:>3.0f}%[reset]]",
                 BarColumn(bar_width=None, complete_style="blue", finished_style="blue"),
             ) as pbar:
                 task = pbar.add_task("[blue]Installing...", total=100)
