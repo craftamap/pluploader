@@ -127,7 +127,7 @@ def root(
     """ A simple command line plugin uploader/installer/manager for atlassian product server
     instances (Confluence/Jira) written in python(3).
     """
-    if logo:
+    if logo and ctx.invoked_subcommand != "api":
         print(LOGO)
     if ask_for_password:
         password = typer.prompt("Password: ", hide_input=True)
@@ -522,6 +522,29 @@ def install_server(
             " importing services that are not properly defined in your atlassian-plugin.xml."
         )
         logging.error("Check the logs of your Atlassian host to find out more.")
+
+
+@app.command("api")
+def api(
+    ctx: typer.Context,
+    endpoint: str = typer.Argument(..., help="path of the endpoint you want to use"),
+    body: str = typer.Argument("", help="body of the request you want to send"),
+    method: str = typer.Option("GET", "-X", help="choose http method",),
+    header: typing.List[str] = typer.Option([], "-H", help="Provide optional header",),
+):
+    """ Make an authenticated request to the atlassian product server
+    """
+    base_url: furl.furl = ctx.obj.get("base_url")
+
+    session = requests.Session()
+    url = base_url.copy().add(path=endpoint)
+    req = requests.Request(method=method, url=url)
+    req.headers = header
+    prepared = req.prepare()
+    print(prepared.headers)
+
+    response = session.send(prepared)
+    print(response.text)
 
 
 if __name__ == "__main__":
