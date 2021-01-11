@@ -7,14 +7,16 @@ import time
 import typing
 import zipfile
 
-import coloredlogs
 import furl
 import requests
 import typer
 import yaml
 from click_default_group import DefaultGroup
 from colorama import Fore
-from tqdm import tqdm
+from rich.console import Console
+from rich.logging import RichHandler
+from rich.progress import BarColumn, Progress
+from rich.table import Table
 
 from . import __version__
 from .job import app_job
@@ -26,6 +28,9 @@ from .upm.upmapi import UpmApi
 from .upm.upmcloudapi import UpmCloudApi
 from .util import atlassian_jar as jar
 from .util import browser, pathutil
+
+FORMAT = "%(message)s"
+logging.basicConfig(level="INFO", format=FORMAT, datefmt="[%X]", handlers=[RichHandler(markup=True, show_path=False)])
 
 app = typer.Typer()
 
@@ -46,9 +51,6 @@ LOGO = f"""
 {Fore.YELLOW}          )){Fore.GREEN}|||||||{Fore.RED}((
 {Fore.YELLOW}            {Fore.RED}/{Fore.GREEN}|||||{Fore.YELLOW}\\
 {Fore.RESET}"""
-
-coloredlogs.install(level="DEBUG")
-coloredlogs.install(fmt="%(asctime)s %(levelname)s %(message)s")
 
 
 def main():
@@ -160,15 +162,19 @@ def list_all(
         logging.error("An error occured - check your credentials")
         logging.error("%s", exc)
         sys.exit(1)
-    print(f"  {'Name':25} {'Version':13} {'Plugin Key':50}")
+    table = Table()
+    table.add_column("")
+    table.add_column("Name")
+    table.add_column("Version")
+    table.add_column("Plugin Key", no_wrap=True)
     for plugin in all_plugins:
         if plugin.enabled:
-            status = f"{Fore.GREEN}✓{Fore.RESET}"
+            status = "[green]✓[reset]"
         else:
-            status = f"{Fore.YELLOW}!{Fore.RESET}"
-
-        plugin_infos = f"{status} {plugin.name[:25]:25}" + f" {str(plugin.version)[:13]:13} ({plugin.key})"
-        print(plugin_infos)
+            status = "[yellow]![reset]"
+        table.add_row(status, plugin.name, plugin.version, plugin.key)
+    console = Console()
+    console.print(table)
     if web:
         browser.open_web_upm(ctx.obj.get("base_url"))
 
@@ -201,7 +207,9 @@ def plugin_info(
         logging.error("An error occured - check your credentials")
         logging.error("%s", exc)
         sys.exit(1)
+
     info.print_table(show_modules)
+
     if web:
         browser.open_web_upm(ctx.obj.get("base_url"))
 
@@ -373,12 +381,17 @@ def install_cloud(base_url: furl.furl, plugin_uri: furl.furl):
 
     try:
         response = cloud.install_plugin(plugin_uri, token)
-        with TqdmUpTo(total=100) as progress:
+        with Progress(
+            "[progress.description]{task.description}",
+            "[[blue]{task.percentage:>3.0f}%[reset]]",
+            BarColumn(bar_width=None, complete_style="blue", finished_style="blue"),
+        ) as pbar:
+            task = pbar.add_task("[blue]Installing...", total=100)
             percentage = 0
-            progress.update_to(percentage)
+            pbar.update(task, advance=percentage)
             while percentage != 100:
                 percentage, plugin = cloud.install_plugin_get_current_progress(response)
-                progress.update(percentage)
+                pbar.update(task, advance=percentage)
                 if percentage != 100:
                     time.sleep(0.1)
     except requests.exceptions.RequestException as e:
@@ -389,9 +402,9 @@ def install_cloud(base_url: furl.furl, plugin_uri: furl.furl):
         sys.exit(1)
 
     if plugin and plugin.enabled:
-        status = f"{Fore.GREEN}enabled{Fore.RESET}!"
+        status = "[green]enabled[reset]!"
     else:
-        status = f"{Fore.RED}disabled{Fore.RESET}!"
+        status = "[red]disabled[reset]!"
     logging.info(f"plugin installed and {status}")
 
 
@@ -469,12 +482,16 @@ def install_server(
     try:
         with open(plugin_path, "rb") as plugin_file:
             files = {"plugin": plugin_file}
-            with TqdmUpTo(total=100) as pbar:
-                pbar.update_to(0)
+            with Progress(
+                "[progress.description]{task.description}",
+                "[[blue]{task.percentage:>3.0f}%[reset]]",
+                BarColumn(bar_width=None, complete_style="blue", finished_style="blue"),
+            ) as pbar:
+                task = pbar.add_task("[blue]Installing...", total=100)
                 progress, previous_request = upm.upload_plugin(files, token)
                 while progress != 100:
                     progress, previous_request = upm.get_current_progress(previous_request)
-                    pbar.update_to(progress)
+                    pbar.update(task, completed=progress)
                     time.sleep(0.1)
     except requests.exceptions.RequestException:
         logging.error("An error occured while uploading plugin")
@@ -487,10 +504,10 @@ def install_server(
             file.close()
 
     if previous_request["enabled"]:
-        status = f"{Fore.GREEN}enabled{Fore.RESET}!"
+        status = "[green]enabled[reset]!"
     else:
         status = (
-            f"{Fore.RED}disabled{Fore.RESET}! \n"
+            "[red]disabled[reset]! \n"
             "You should check the logs of your Atlassian host to find out why your plugin was disabled."
         )
 
@@ -505,23 +522,6 @@ def install_server(
             " importing services that are not properly defined in your atlassian-plugin.xml."
         )
         logging.error("Check the logs of your Atlassian host to find out more.")
-
-
-class TqdmUpTo(tqdm):
-    """Provides `update_to(n)` which uses `tqdm.update(delta_n)`."""
-
-    def update_to(self, b=1, bsize=1, tsize=None):
-        """
-        b  : int, optional
-            Number of blocks transferred so far [default: 1].
-        bsize  : int, optional
-            Size of each block (in tqdm units) [default: 1].
-        tsize  : int, optional
-            Total size (in tqdm units). If [default: None] remains unchanged.
-        """
-        if tsize is not None:
-            self.total = tsize
-        self.update(b * bsize - self.n)  # will also set self.n = b * bsize
 
 
 if __name__ == "__main__":
