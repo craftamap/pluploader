@@ -111,8 +111,13 @@ def update(
         logging.error("An error occured - check your credentials")
         logging.error("%s", exc)
         sys.exit(1)
+    grid = Table.grid(expand=True)
+    grid.add_column(style="blue")
+    grid.add_column()
     for key, value in license.__dict__.items():
-        print(f"{(key.replace('_', ' ') + ':'):25.25} {value}")
+        grid.add_row(key.replace("_", " "), f"{value}")
+    console = Console()
+    console.print(grid)
     if web:
         browser.open_web_upm(ctx.obj.get("base_url"))
 
@@ -142,8 +147,13 @@ def delete(
         logging.error("An error occured - check your credentials")
         logging.error("%s", exc)
         sys.exit(1)
+    grid = Table.grid(expand=True)
+    grid.add_column(style="blue")
+    grid.add_column()
     for key, value in license.__dict__.items():
-        print(f"{(key.replace('_', ' ') + ':'):25.25} {value}")
+        grid.add_row(key.replace("_", " "), f"{value}")
+    console = Console()
+    console.print(grid)
     logging.warn(
         "When the delete command is run, the old license is shown. Please run pluploader license info to ensure that"
         " removing the license was successful."
@@ -178,7 +188,12 @@ def timebomb(
         logging.error("An error occured - check your credentials")
         logging.error("%s", exc)
         sys.exit(1)
+    grid = Table.grid(expand=True)
+    grid.add_column(style="blue")
+    grid.add_column()
     for key, value in license.__dict__.items():
-        print(f"{(key.replace('_', ' ') + ':'):25.25} {value}")
+        grid.add_row(key.replace("_", " "), f"{value}")
+    console = Console()
+    console.print(grid)
     if web:
         browser.open_web_upm(ctx.obj.get("base_url"))
