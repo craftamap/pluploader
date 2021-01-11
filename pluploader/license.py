@@ -4,6 +4,8 @@ from enum import Enum
 
 import requests
 import typer
+from rich.console import Console
+from rich.table import Table
 
 from .upm.upmapi import UpmApi
 from .util import browser, pathutil
@@ -72,8 +74,13 @@ def info(
         logging.error("An error occured - check your credentials")
         logging.error("%s", exc)
         sys.exit(1)
+    grid = Table.grid(expand=True)
+    grid.add_column(style="blue")
+    grid.add_column()
     for key, value in license.__dict__.items():
-        print(f"{(key.replace('_', ' ') + ':'):25.25} {value}")
+        grid.add_row(key.replace("_", " "), f"{value}")
+    console = Console()
+    console.print(grid)
     if web:
         browser.open_web_upm(ctx.obj.get("base_url"))
 
