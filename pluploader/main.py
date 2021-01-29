@@ -537,7 +537,8 @@ def api(
     base_url: furl.furl = ctx.obj.get("base_url")
 
     session = requests.Session()
-    url = base_url.copy().add(path=endpoint)
+    endpoint_f = furl.furl(endpoint)
+    url = base_url.copy().add(path=endpoint_f.path).set(query=str(endpoint_f.query))
     req = requests.Request(method=method, url=url)
     req.headers = {
         **req.headers,
