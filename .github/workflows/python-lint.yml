@@ -31,6 +31,7 @@ jobs:
         VALIDATE_PYTHON_PYLINT: false
         LINTER_RULES_PATH: .
         PYTHON_BLACK_CONFIG_FILE: pyproject.toml
+        VALIDATE_JSCPD: false # wtf?
     - name: Run pluploader --version
       run: |
         pip install .
