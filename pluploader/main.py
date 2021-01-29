@@ -530,7 +530,7 @@ def api(
     endpoint: str = typer.Argument(..., help="path of the endpoint you want to use"),
     body: str = typer.Argument("", help="body of the request you want to send"),
     method: str = typer.Option("GET", "-X", help="choose http method",),
-    header: typing.List[str] = typer.Option([], "-H", help="Provide optional header",),
+    header: typing.List[str] = typer.Option([], "-H", help="Provide additional headers",),
 ):
     """ Make an authenticated request to the atlassian product server
     """
@@ -539,10 +539,14 @@ def api(
     session = requests.Session()
     url = base_url.copy().add(path=endpoint)
     req = requests.Request(method=method, url=url)
-    req.headers = header
-    prepared = req.prepare()
-    print(prepared.headers)
+    req.headers = {
+        **req.headers,
+        **{x.split(":", 1)[0].strip(): x.split(":", 1)[1].strip() for x in header},
+    }
+    if method.lower() == "post" or method.lower() == "put":
+        req.data = body
 
+    prepared = req.prepare()
     response = session.send(prepared)
     print(response.text)
 
