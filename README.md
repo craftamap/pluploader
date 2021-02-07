@@ -25,6 +25,12 @@ Regulary tested on Linux (Arch Linux), MacOS and Windows 10.
 pip3 install pluploader
 ```
 
+### brew
+
+```bash
+brew tap craftamap/tap && brew install pluploader
+```
+
 ### Docker
 
 If you do not want to install python3 or pip, you can also pull the latest
