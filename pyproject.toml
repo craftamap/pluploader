@@ -4,6 +4,9 @@ version = "0.0.0"
 description = "CLI Confluence/Jira Plugin uploader"
 authors = ["Fabian Siegel <fabian@livelyapps.com>"]
 license = "Apache-2.0"
+readme = "README.md"
+homepage = "https://github.com/livelyapps/pluploader"
+repository = "https://github.com/livelyapps/pluploader"
 packages = [
     { include = "pluploader" },
 ]
