@@ -127,7 +127,7 @@ def root(
     """ A simple command line plugin uploader/installer/manager for atlassian product server
     instances (Confluence/Jira) written in python(3).
     """
-    if logo:
+    if logo and ctx.invoked_subcommand != "api":
         print(LOGO)
     if ask_for_password:
         password = typer.prompt("Password: ", hide_input=True)
@@ -522,6 +522,34 @@ def install_server(
             " importing services that are not properly defined in your atlassian-plugin.xml."
         )
         logging.error("Check the logs of your Atlassian host to find out more.")
+
+
+@app.command("api")
+def api(
+    ctx: typer.Context,
+    endpoint: str = typer.Argument(..., help="path of the endpoint you want to use"),
+    body: str = typer.Argument("", help="body of the request you want to send"),
+    method: str = typer.Option("GET", "-X", help="choose http method",),
+    header: typing.List[str] = typer.Option([], "-H", help="Provide additional headers",),
+):
+    """ Make an authenticated request to the atlassian product server
+    """
+    base_url: furl.furl = ctx.obj.get("base_url")
+
+    session = requests.Session()
+    endpoint_f = furl.furl(endpoint)
+    url = base_url.copy().add(path=endpoint_f.path).set(query=str(endpoint_f.query))
+    req = requests.Request(method=method, url=url)
+    req.headers = {
+        **req.headers,
+        **{x.split(":", 1)[0].strip(): x.split(":", 1)[1].strip() for x in header},
+    }
+    if method.lower() == "post" or method.lower() == "put":
+        req.data = body
+
+    prepared = req.prepare()
+    response = session.send(prepared)
+    print(response.text)
 
 
 if __name__ == "__main__":
