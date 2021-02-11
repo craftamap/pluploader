@@ -1,11 +1,13 @@
 """ pluploader executable
 """
+import json
 import logging
 import pathlib
 import sys
 import time
 import typing
 import zipfile
+from xmlrpc import client as rpcclient
 
 import furl
 import requests
@@ -550,6 +552,32 @@ def api(
     prepared = req.prepare()
     response = session.send(prepared)
     print(response.text)
+
+
+@app.command("rpc")
+def rpc(
+    ctx: typer.Context,
+    method: str = typer.Argument(..., help="remote confluence "),
+    arguments: typing.List[str] = typer.Argument(...),
+):
+    # print(method, arguments)
+    def try_to_json(input):
+        return_val = input
+        try:
+            return_val = json.loads(input)
+        except Exception:
+            pass
+        return return_val
+
+    base_url: furl.furl = ctx.obj.get("base_url")
+    with rpcclient.ServerProxy(str(base_url.add(path="rpc/xmlrpc"))) as proxy:
+        try:
+            token = proxy.confluence2.login(base_url.username, base_url.password)
+            method = getattr(proxy.confluence2, method)
+            response = method(token, *map(try_to_json, arguments))
+            print(response)
+        except Exception as e:
+            print(e)
 
 
 if __name__ == "__main__":
