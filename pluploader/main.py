@@ -1,11 +1,14 @@
 """ pluploader executable
 """
+import json
 import logging
 import pathlib
 import sys
 import time
 import typing
 import zipfile
+from xmlrpc import client as rpcclient
+from xmlrpc.client import ProtocolError as RpcProtocolError
 
 import furl
 import requests
@@ -550,6 +553,53 @@ def api(
     prepared = req.prepare()
     response = session.send(prepared)
     print(response.text)
+
+
+@app.command("rpc",)
+def rpc(
+    ctx: typer.Context,
+    method: str = typer.Argument(..., help="method you want to execute on the remote confluence"),
+    arguments: typing.List[str] = typer.Argument(
+        ..., help="all arguments you want to pass to the method with. For classes/objects, provide a json string.",
+    ),
+):
+    """
+    this command allows interaction with the (deprecated, but  still functional)
+    confluence rpc api by providing the method name and it's required arguments.
+    You do not need to care about the rpc-authentication, as this command
+    takes care of it. Therefore, you can also obmit the first parameter (String token)
+    required for many commands.
+
+    EXAMPLES:
+
+        pluploader rpc addUser '{"name":"charlie", "fullname": "charlie", "email":"charlie@charlie"}' charlie
+
+    You can find all available methods that the rpc-api offers in this documentation:
+
+    https://developer.atlassian.com/server/confluence/remote-confluence-methods/
+    """
+
+    def try_to_json(input):
+        return_val = input
+        try:
+            return_val = json.loads(input)
+        except Exception:
+            pass
+        return return_val
+
+    base_url: furl.furl = ctx.obj.get("base_url")
+    with rpcclient.ServerProxy(str(base_url.add(path="rpc/xmlrpc"))) as proxy:
+        try:
+            token = proxy.confluence2.login(base_url.username, base_url.password)
+            method = getattr(proxy.confluence2, method)
+            response = method(token, *map(try_to_json, arguments))
+            print(json.dumps(response, default=str))
+        except RpcProtocolError as e:
+            logging.error("An error occured: %s", e)
+            if e.errcode == 403:
+                logging.error("Do you have xml-rpc enabled?")
+        except Exception as e:
+            logging.error("An error occured: %s", e)
 
 
 if __name__ == "__main__":
