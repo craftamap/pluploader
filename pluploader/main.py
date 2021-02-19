@@ -8,6 +8,7 @@ import time
 import typing
 import zipfile
 from xmlrpc import client as rpcclient
+from xmlrpc.client import ProtocolError as RpcProtocolError
 
 import furl
 import requests
@@ -593,8 +594,12 @@ def rpc(
             method = getattr(proxy.confluence2, method)
             response = method(token, *map(try_to_json, arguments))
             print(json.dumps(response, default=str))
+        except RpcProtocolError as e:
+            logging.error("An error occured: %s", e)
+            if e.errcode == 403:
+                logging.error("Do you have xml-rpc enabled?")
         except Exception as e:
-            print(e)
+            logging.error("An error occured: %s", e)
 
 
 if __name__ == "__main__":
