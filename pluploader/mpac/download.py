@@ -9,7 +9,7 @@ from furl import furl
 from . import rest, scraper
 
 
-def _download_file_to_tmp_dir(url: furl) -> os.PathLike:
+def _download_file_to_tmp_dir(url: furl, filename: typing.Optional[str] = None) -> os.PathLike:
     response = requests.get(url)
     response_url: furl = furl(response.url)
 
@@ -18,7 +18,10 @@ def _download_file_to_tmp_dir(url: furl) -> os.PathLike:
     pluploader_temp_dir = temp_dir / "pluploader"
     pluploader_temp_dir.mkdir(exist_ok=True)
 
-    filename = pluploader_temp_dir / response_url.path.segments[-1].split("/")[-1]
+    if filename is None:
+        filename = pluploader_temp_dir / response_url.path.segments[-1].split("/")[-1]
+    else:
+        filename = pluploader_temp_dir / filename
 
     with open(filename, "wb") as tmpfile:
         tmpfile.write(response.content)
@@ -30,7 +33,7 @@ def download_app_by_app_key(app_key: str, version: str = "latest") -> os.PathLik
     asset = rest.get_binary_from_app_version(app)
 
     download_link = asset.links.get("binary").href
-    return _download_file_to_tmp_dir(download_link)
+    return _download_file_to_tmp_dir(download_link, asset.file_info.logical_file_name)
 
 
 def download_app_by_marketplace_id(marketplace_id: str, version: str = "latest") -> os.PathLike:
