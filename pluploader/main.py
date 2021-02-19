@@ -554,12 +554,30 @@ def api(
     print(response.text)
 
 
-@app.command("rpc")
+@app.command("rpc",)
 def rpc(
     ctx: typer.Context,
-    method: str = typer.Argument(..., help="remote confluence "),
-    arguments: typing.List[str] = typer.Argument(...),
+    method: str = typer.Argument(..., help="method you want to execute on the remote confluence"),
+    arguments: typing.List[str] = typer.Argument(
+        ..., help="all arguments you want to pass to the method with. For classes/objects, provide a json string.",
+    ),
 ):
+    """
+    RPC allows you to interact with the (deprecated) confluence rpc api
+    by providing the method name and it's required arguments.
+    You do not need to care about the rpc-authenication, as this command
+    takes care of it. Therefore, you can also obmit the first parameter (String token)
+    required for many commands.
+
+    EXAMPLES:
+
+        pluploader rpc addUser '{"name":"charlie", "fullname": "charlie", "email":"charlie@charlie"}' charlie
+
+    You can find all available methods that the rpc-api offers in this documentation:
+
+    https://developer.atlassian.com/server/confluence/remote-confluence-methods/
+    """
+
     def try_to_json(input):
         return_val = input
         try:
