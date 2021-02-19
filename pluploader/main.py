@@ -592,7 +592,7 @@ def rpc(
             token = proxy.confluence2.login(base_url.username, base_url.password)
             method = getattr(proxy.confluence2, method)
             response = method(token, *map(try_to_json, arguments))
-            print(json.dumps(response))
+            print(json.dumps(response, default=str))
         except Exception as e:
             print(e)
 
