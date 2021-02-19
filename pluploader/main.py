@@ -564,9 +564,9 @@ def rpc(
     ),
 ):
     """
-    RPC allows you to interact with the (deprecated) confluence rpc api
-    by providing the method name and it's required arguments.
-    You do not need to care about the rpc-authenication, as this command
+    this command allows interaction with the (deprecated, but  still functional)
+    confluence rpc api by providing the method name and it's required arguments.
+    You do not need to care about the rpc-authentication, as this command
     takes care of it. Therefore, you can also obmit the first parameter (String token)
     required for many commands.
 
