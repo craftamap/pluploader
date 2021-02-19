@@ -1,8 +1,8 @@
 import os
 import pathlib
+import re
 import tempfile
 import typing
-import re
 
 import requests
 from furl import furl
