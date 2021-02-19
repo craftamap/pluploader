@@ -560,7 +560,6 @@ def rpc(
     method: str = typer.Argument(..., help="remote confluence "),
     arguments: typing.List[str] = typer.Argument(...),
 ):
-    # print(method, arguments)
     def try_to_json(input):
         return_val = input
         try:
@@ -575,7 +574,7 @@ def rpc(
             token = proxy.confluence2.login(base_url.username, base_url.password)
             method = getattr(proxy.confluence2, method)
             response = method(token, *map(try_to_json, arguments))
-            print(response)
+            print(json.dumps(response))
         except Exception as e:
             print(e)
 
