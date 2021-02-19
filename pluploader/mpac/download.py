@@ -1,5 +1,6 @@
 import os
 import pathlib
+import re
 import tempfile
 import typing
 
@@ -9,7 +10,7 @@ from furl import furl
 from . import rest, scraper
 
 
-def _download_file_to_tmp_dir(url: furl) -> os.PathLike:
+def _download_file_to_tmp_dir(url: furl, filename: typing.Optional[str] = None) -> os.PathLike:
     response = requests.get(url)
     response_url: furl = furl(response.url)
 
@@ -18,7 +19,14 @@ def _download_file_to_tmp_dir(url: furl) -> os.PathLike:
     pluploader_temp_dir = temp_dir / "pluploader"
     pluploader_temp_dir.mkdir(exist_ok=True)
 
-    filename = pluploader_temp_dir / response_url.path.segments[-1].split("/")[-1]
+    if filename is not None:
+        filename = pluploader_temp_dir / filename
+    else:
+        try:
+            content_disposition = response.headers.get("content-disposition") or ""
+            filename = pluploader_temp_dir / re.findall('filename="(.+)"', content_disposition)[0]
+        except Exception:
+            filename = pluploader_temp_dir / response_url.path.segments[-1].split("/")[-1]
 
     with open(filename, "wb") as tmpfile:
         tmpfile.write(response.content)
