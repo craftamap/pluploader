@@ -249,6 +249,30 @@ A job can be specified by either using `--id <job id>` or by using
 `--idx <job index in list>`. If no job is specified, you will be asked
 interactively.
 
+### API
+
+You can interact with the HTTP/REST-API of your configured instance by using
+`pluploader api ENDPOINT [BODY]`. The arguments work a bit like the 
+well-known tool `curl`. You can use `-X METHOD` to choose the HTTP method and
+`-H "HEADER-NAME: HEADER-VALUE"` to add a HTTP header.
+
+```
+pluploader api -X POST -H "content-type: application/json" rest/api/content/ '{ "type":"page", "title":"My Test Page", "space":{"key":"TEST"}, "body":{ "storage": { "value":"<p>This is a new page</p>", "representation":"storage" } } }'
+```
+
+### RPC
+
+`pluploader rpc` allows interaction with the (deprecated, but  still
+functional) confluence rpc api by providing the method name and it's
+required arguments. You do not need to care about the rpc-authentication,
+as this command takes care of it. Therefore, you can also obmit the first
+parameter (String token) required for many commands.
+
+
+```
+pluploader rpc addUser '{"name":"charlie", "fullname": "charlie", "email":"charlie@charlie"}' charlie
+```
+
 ### Configuration
 
 If you don't want to write the username or password (or any other global
