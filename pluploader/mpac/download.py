@@ -2,6 +2,7 @@ import os
 import pathlib
 import tempfile
 import typing
+import re
 
 import requests
 from furl import furl
@@ -18,10 +19,14 @@ def _download_file_to_tmp_dir(url: furl, filename: typing.Optional[str] = None) 
     pluploader_temp_dir = temp_dir / "pluploader"
     pluploader_temp_dir.mkdir(exist_ok=True)
 
-    if filename is None:
-        filename = pluploader_temp_dir / response_url.path.segments[-1].split("/")[-1]
-    else:
+    if filename is not None:
         filename = pluploader_temp_dir / filename
+    else:
+        try:
+            content_disposition = response.headers.get("content-disposition") or ""
+            filename = pluploader_temp_dir / re.findall('filename="(.+)"', content_disposition)[0]
+        except Exception:
+            filename = pluploader_temp_dir / response_url.path.segments[-1].split("/")[-1]
 
     with open(filename, "wb") as tmpfile:
         tmpfile.write(response.content)
@@ -33,7 +38,7 @@ def download_app_by_app_key(app_key: str, version: str = "latest") -> os.PathLik
     asset = rest.get_binary_from_app_version(app)
 
     download_link = asset.links.get("binary").href
-    return _download_file_to_tmp_dir(download_link, asset.file_info.logical_file_name)
+    return _download_file_to_tmp_dir(download_link)
 
 
 def download_app_by_marketplace_id(marketplace_id: str, version: str = "latest") -> os.PathLike:
