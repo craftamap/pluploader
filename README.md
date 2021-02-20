@@ -139,7 +139,7 @@ You can work around this by using the configuration file or by using environment
 pluploader also supports installing atlassian-connect plugins to cloud instances
 by enabling cloud support with `--cloud` and providing the descriptor url with `--plugin-uri`.
 
-```
+```bash
 pluploader install --cloud --plugin-uri https://your.ngrok.here
 ```
 
@@ -148,7 +148,7 @@ pluploader install --cloud --plugin-uri https://your.ngrok.here
 ![Managing plugins](.github/images/pluploader-demo-2.gif)
 
 pluploader can also replace the usage of the universal plugin manager completely
-by using the subcommands `list`, `info`, `enable`, `disable`, and `uninstall` 
+by using the subcommands `list`, `info`, `enable`, `disable`, and `uninstall`
 (`enable` and `disable` are not supported in the atlassian cloud).
 
 To get a list of all installed plugins of the configured instance, just type:
@@ -240,11 +240,11 @@ pluploader license delete com.example.plugin.key
 ### API
 
 You can interact with the HTTP/REST-API of your configured instance by using
-`pluploader api ENDPOINT [BODY]`. The arguments work a bit like the 
+`pluploader api ENDPOINT [BODY]`. The arguments work a bit like the
 well-known tool `curl`. You can use `-X METHOD` to choose the HTTP method and
 `-H "HEADER-NAME: HEADER-VALUE"` to add a HTTP header.
 
-```
+```bash
 pluploader api -X POST -H "content-type: application/json" rest/api/content/ '{ "type":"page", "title":"My Test Page", "space":{"key":"TEST"}, "body":{ "storage": { "value":"<p>This is a new page</p>", "representation":"storage" } } }'
 ```
 
@@ -257,7 +257,7 @@ as this command takes care of it. Therefore, you can also obmit the first
 parameter (String token) required for many commands.
 
 
-```
+```bash
 pluploader rpc addUser '{"name":"charlie", "fullname": "charlie", "email":"charlie@charlie"}' charlie
 ```
 
