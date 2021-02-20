@@ -45,7 +45,7 @@ docker pull docker.pkg.github.com/livelyapps/pluploader/pluploader:latest
 pluploader can then be run by executing
 
 ```bash
-docker run -v "$(pwd)":/workdir -it craftamap/pluploader:v0.6.0
+docker run -v "$(pwd)":/workdir -it craftamap/pluploader:v0.7.0
 ```
 
 ## Usage
