@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pluploader"
-version = "0.0.0"
+version = "0.6.0-dev"
 description = "CLI Confluence/Jira Plugin uploader"
 authors = ["Fabian Siegel <fabian@livelyapps.com>"]
 license = "Apache-2.0"
@@ -10,10 +10,6 @@ repository = "https://github.com/livelyapps/pluploader"
 packages = [
     { include = "pluploader" },
 ]
-
-[tool.poetry-dynamic-versioning]
-enable = true
-style = "semver"
 
 [tool.poetry.scripts]
 pluploader = 'pluploader.main:main'
@@ -52,6 +48,6 @@ target_version = ['py36']
 include = '\.pyi?$'
 
 [build-system]
-requires = ["poetry>=1.1.0",  "poetry-dynamic-versioning"]
+requires = ["poetry>=1.1.0"]
 build-backend = "poetry.masonry.api"
 
