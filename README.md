@@ -12,8 +12,8 @@
 
 ![pluploader](.github/images/pluploader-demo-1.gif)
 
-A simple command line plugin uploader/installer/manager for atlassian product
-server instances (Confluence/Jira) written in python(3).
+A advanced command-line plugin uploader/installer/manager for atlassian
+server and cloud instances (Confluence/Jira) written in python(3).
 
 ## Installation
 
@@ -25,7 +25,7 @@ Regulary tested on Linux (Arch Linux), MacOS and Windows 10.
 pip3 install pluploader
 ```
 
-### brew
+### brew (MacOS)
 
 ```bash
 brew tap craftamap/tap && brew install pluploader
@@ -67,6 +67,24 @@ You can specify various global options:
 
 All Global Options can be overwritten by using a configuration file. See more in
 [Configuration](#Configuration)
+
+### Configuration
+
+If you don't want to write the username or password (or any other global
+parameter) each time, you can use a filed called `.pluprc`, either placed in
+your current maven project or/and in your home directory. A example looks like
+this:
+
+```bash
+base_url: https://example.com:8090
+user: admin
+password: admin
+```
+
+### Environment variables
+
+You can also specify username, password and base url by using `PLUP_USER`,
+`PLUP_PASSWORD` and `PLUP_BASEURL`.
 
 ### Uploading plugins
 
@@ -113,12 +131,25 @@ pluploader --base-url https://your-confluence.com:8090 install
 
 You can work around this by using the configuration file or by using environment variables.
 
+### Installing a connect descriptor to a cloud instance.
+
+
+![Uploading to cloud](.github/images/pluploader-demo-5.gif)
+
+pluploader also supports installing atlassian-connect plugins to cloud instances
+by enabling cloud support with `--cloud` and providing the descriptor url with `--plugin-uri`.
+
+```
+pluploader install --cloud --plugin-uri https://your.ngrok.here
+```
+
 ### Managing plugins
 
 ![Managing plugins](.github/images/pluploader-demo-2.gif)
 
 pluploader can also replace the usage of the universal plugin manager completely
-by using the subcommands `list`, `info`, `enable`, `disable`, and `uninstall`.
+by using the subcommands `list`, `info`, `enable`, `disable`, and `uninstall` 
+(`enable` and `disable` are not supported in the atlassian cloud).
 
 To get a list of all installed plugins of the configured instance, just type:
 
@@ -143,7 +174,7 @@ The commands `enable`, `disable` or `uninstall` follow the same syntax.
 
 ### Safe Mode
 
-pluploader also supports disabling or enabling all apps using Safe Mode.
+pluploader also supports disabling or enabling all apps using Safe Mode (does not work in cloud).
 
 To retrieve the status if safe-mode is enabled at the moment, use
 
@@ -206,6 +237,30 @@ To remove an applied license, you can use:
 pluploader license delete com.example.plugin.key
 ```
 
+### API
+
+You can interact with the HTTP/REST-API of your configured instance by using
+`pluploader api ENDPOINT [BODY]`. The arguments work a bit like the 
+well-known tool `curl`. You can use `-X METHOD` to choose the HTTP method and
+`-H "HEADER-NAME: HEADER-VALUE"` to add a HTTP header.
+
+```
+pluploader api -X POST -H "content-type: application/json" rest/api/content/ '{ "type":"page", "title":"My Test Page", "space":{"key":"TEST"}, "body":{ "storage": { "value":"<p>This is a new page</p>", "representation":"storage" } } }'
+```
+
+### RPC
+
+`pluploader rpc` allows interaction with the (deprecated, but  still
+functional) confluence rpc api by providing the method name and it's
+required arguments. You do not need to care about the rpc-authentication,
+as this command takes care of it. Therefore, you can also obmit the first
+parameter (String token) required for many commands.
+
+
+```
+pluploader rpc addUser '{"name":"charlie", "fullname": "charlie", "email":"charlie@charlie"}' charlie
+```
+
 ### Scheduled Jobs (Confluence - Experimental)
 
 > ℹ This feature is currently experimental and only works in specific version of
@@ -249,47 +304,6 @@ A job can be specified by either using `--id <job id>` or by using
 `--idx <job index in list>`. If no job is specified, you will be asked
 interactively.
 
-### API
-
-You can interact with the HTTP/REST-API of your configured instance by using
-`pluploader api ENDPOINT [BODY]`. The arguments work a bit like the 
-well-known tool `curl`. You can use `-X METHOD` to choose the HTTP method and
-`-H "HEADER-NAME: HEADER-VALUE"` to add a HTTP header.
-
-```
-pluploader api -X POST -H "content-type: application/json" rest/api/content/ '{ "type":"page", "title":"My Test Page", "space":{"key":"TEST"}, "body":{ "storage": { "value":"<p>This is a new page</p>", "representation":"storage" } } }'
-```
-
-### RPC
-
-`pluploader rpc` allows interaction with the (deprecated, but  still
-functional) confluence rpc api by providing the method name and it's
-required arguments. You do not need to care about the rpc-authentication,
-as this command takes care of it. Therefore, you can also obmit the first
-parameter (String token) required for many commands.
-
-
-```
-pluploader rpc addUser '{"name":"charlie", "fullname": "charlie", "email":"charlie@charlie"}' charlie
-```
-
-### Configuration
-
-If you don't want to write the username or password (or any other global
-parameter) each time, you can use a filed called `.pluprc`, either placed in
-your current maven project or/and in your home directory. A example looks like
-this:
-
-```bash
-base_url: https://example.com:8090
-user: admin
-password: admin
-```
-
-### Environment variables
-
-You can also specify username, password and base url by using `PLUP_USER`,
-`PLUP_PASSWORD` and `PLUP_BASEURL`.
 
 ## Development
 
