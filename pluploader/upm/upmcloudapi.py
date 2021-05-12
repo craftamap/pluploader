@@ -1,3 +1,4 @@
+import dataclasses
 import typing
 
 import requests
@@ -5,6 +6,18 @@ from furl import furl
 
 from .exceptions import UploadFailedException
 from .upmapi import PluginDto, UpmApi
+
+
+@dataclasses.dataclass(frozen=True)
+class Token:
+    pluginKey: str
+    token: str
+    state: str
+    valid: bool
+
+    @classmethod
+    def decode(cls, obj: dict) -> "Token":
+        return cls(pluginKey=obj.get("pluginKey"), token=obj.get("token"), state=obj.get("state"), valid=obj.get("valid"),)
 
 
 class UpmCloudApi(UpmApi):
@@ -42,3 +55,13 @@ class UpmCloudApi(UpmApi):
             progress = int(response_json.get("status", {}).get("amountDownloaded", 0))
             return progress, None
         return 0, None
+
+    def list_access_token(self) -> typing.List[Token]:
+        request_url = self.base_url.copy()
+        request_url.add(path=self.UPM_API_ENDPOINT)
+        request_url.add(path="license-tokens")
+        try:
+            response = requests.get(request_url.url)
+            return [Token.decode(obj) for obj in response.json().get("tokens")]
+        except Exception:
+            raise ValueError(response.status_code, response.content)

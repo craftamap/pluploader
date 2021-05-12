@@ -8,10 +8,13 @@ from rich.console import Console
 from rich.table import Table
 
 from .upm.upmapi import UpmApi
+from .upm.upmcloudapi import UpmCloudApi
 from .util import browser, pathutil
 
 app_license = typer.Typer()
 
+app_access_token = typer.Typer()
+app_license.add_typer(app_access_token, name="access-token")
 
 timebomb_licenses = {
     "threehours": (
@@ -42,8 +45,9 @@ class TimebombLicensesEnum(str, Enum):
 
 
 @app_license.callback()
-def safemode(ctx: typer.Context):
-    """Get and set license information for apps"""
+def license(ctx: typer.Context):
+    """Get and set license information for apps
+    """
 
 
 @app_license.command("info")
@@ -194,5 +198,38 @@ def timebomb(
         grid.add_row(key.replace("_", " "), f"{value}")
     console = Console()
     console.print(grid)
+    if web:
+        browser.open_web_upm(ctx.obj.get("base_url"))
+
+
+@app_access_token.callback()
+def access_token(ctx: typer.Context):
+    """ Get and set information about cloud access tokens 
+    """
+
+
+@app_access_token.command("list")
+def access_token_list(
+    ctx: typer.Context, web: bool = typer.Option(False, help="open upm in web browser after showing info"),
+):
+    try:
+        upm = UpmCloudApi(ctx.obj.get("base_url"))
+        access_tokens = upm.list_access_token()
+    except requests.exceptions.ConnectionError:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except Exception as exc:
+        logging.error("An error occured - check your credentials")
+        logging.error("%s", exc)
+        sys.exit(1)
+    table = Table(expand=True)
+    table.add_column("pluginKey", style="blue")
+    table.add_column("token")
+    table.add_column("state")
+    table.add_column("valid")
+    for access_token in access_tokens:
+        table.add_row(access_token.pluginKey, access_token.token, access_token.state, f"{access_token.valid}")
+    console = Console()
+    console.print(table)
     if web:
         browser.open_web_upm(ctx.obj.get("base_url"))
