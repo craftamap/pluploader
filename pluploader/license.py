@@ -212,6 +212,8 @@ def access_token(ctx: typer.Context):
 def access_token_list(
     ctx: typer.Context, web: bool = typer.Option(False, help="open upm in web browser after showing info"),
 ):
+    """ lists all access tokens for the instance
+    """
     try:
         upm = UpmCloudApi(ctx.obj.get("base_url"))
         access_tokens = upm.list_access_token()
@@ -229,6 +231,46 @@ def access_token_list(
     table.add_column("valid")
     for access_token in access_tokens:
         table.add_row(access_token.pluginKey, access_token.token, access_token.state, f"{access_token.valid}")
+    console = Console()
+    console.print(table)
+    if web:
+        browser.open_web_upm(ctx.obj.get("base_url"))
+
+
+@app_access_token.command("info")
+def access_token_info(
+    ctx: typer.Context,
+    plugin: str = typer.Argument(None, help="the plugin key"),
+    web: bool = typer.Option(False, help="open upm in web browser after showing info"),
+):
+    """ get information about a specific access token by specifing the plugin key
+    """
+    if plugin is None:
+        try:
+            plugin = pathutil.get_plugin_key_from_pom()
+        except FileNotFoundError:
+            logging.error("Could not find the plugin you want to update the license of. Are you in a maven directory?")
+            sys.exit(1)
+        except pathutil.PluginKeyNotFoundError:
+            logging.error("Could not find the plugin you want to update the license of. Is the plugin key set in the pom.xml?")
+            sys.exit(1)
+    try:
+        upm = UpmCloudApi(ctx.obj.get("base_url"))
+        access_token = upm.get_access_token(plugin)
+    except requests.exceptions.ConnectionError:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except Exception as exc:
+        logging.error("An error occured - check your credentials")
+        logging.error("%s", exc)
+        sys.exit(1)
+    table = Table(expand=True)
+    table.add_column("pluginKey", style="blue")
+    table.add_column("token")
+    table.add_column("state")
+    table.add_column("valid")
+    for t in [access_token]:
+        table.add_row(t.pluginKey, t.token, t.state, f"{t.valid}")
     console = Console()
     console.print(table)
     if web:

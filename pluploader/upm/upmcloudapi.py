@@ -65,3 +65,14 @@ class UpmCloudApi(UpmApi):
             return [Token.decode(obj) for obj in response.json().get("tokens")]
         except Exception:
             raise ValueError(response.status_code, response.content)
+
+    def get_access_token(self, plugin_key) -> Token:
+        request_url = self.base_url.copy()
+        request_url.add(path=self.UPM_API_ENDPOINT)
+        request_url.add(path="license-tokens")
+        request_url.add(path=f"{plugin_key}-key")
+        try:
+            response = requests.get(request_url.url)
+            return Token.decode(response.json())
+        except Exception:
+            raise ValueError(response.status_code, response.content)
