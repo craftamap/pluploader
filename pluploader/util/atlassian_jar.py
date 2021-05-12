@@ -11,7 +11,7 @@ from .pathutil import PluginKeyNotFoundError
 
 
 def _get_atlassian_plugin_xml_from_jar_path(path: pathlib.Path) -> str:
-    """ Opens the jar on the provided path and tries to find the
+    """Opens the jar on the provided path and tries to find the
     atlassian-plugin.xml in this file
     Args:
         path (pathlib.Param): the path to the jar file
@@ -29,7 +29,7 @@ def _get_atlassian_plugin_xml_from_jar_path(path: pathlib.Path) -> str:
 
 
 def _find_plugin_key(atlassian_plugin_xml: str) -> str:
-    """ Finds the plugin key in an atlassian_plugin_xml
+    """Finds the plugin key in an atlassian_plugin_xml
     Args:
         atlassian_plugin_xml: the content of an atlassian_plugin.xml
     Returns:
@@ -45,7 +45,7 @@ def _find_plugin_key(atlassian_plugin_xml: str) -> str:
 
 
 def get_plugin_key_from_jar_path(path: pathlib.Path) -> str:
-    """ Tries to find the plugin key of an atlassian server app plugin by providing an path to the jar.
+    """Tries to find the plugin key of an atlassian server app plugin by providing an path to the jar.
     Args:
         path (pathlib.Param): the path to the jar file
     Returns:

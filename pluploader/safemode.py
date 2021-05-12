@@ -13,13 +13,13 @@ app_safemode = typer.Typer()
 
 @app_safemode.callback()
 def safemode(ctx: typer.Context):
-    """ Controls the upm safemode
-    """
+    """Controls the upm safemode"""
 
 
 @app_safemode.command("status")
 def safemode_status(
-    ctx: typer.Context, web: bool = typer.Option(False, help="open upm in web browser after showing safemode status"),
+    ctx: typer.Context,
+    web: bool = typer.Option(False, help="open upm in web browser after showing safemode status"),
 ):
     """ prints out the safemode status """
     try:
@@ -39,7 +39,8 @@ def safemode_status(
 
 @app_safemode.command("enable")
 def safemode_enable(
-    ctx: typer.Context, web: bool = typer.Option(False, help="open upm in web browser after showing safemode status"),
+    ctx: typer.Context,
+    web: bool = typer.Option(False, help="open upm in web browser after showing safemode status"),
 ):
     try:
         upm = UpmApi(ctx.obj.get("base_url"))
