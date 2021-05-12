@@ -12,7 +12,7 @@ class PluginKeyNotFoundError(RuntimeError):
 
 
 def get_jar_path_from_pom() -> os.PathLike:
-    """ Get jar to upload based on maven pom
+    """Get jar to upload based on maven pom
 
     This function reads the pom and analyses which artifact was build by the last
     `mvn package` command. If the file exists, the file will be returned
@@ -28,7 +28,7 @@ def get_jar_path_from_pom() -> os.PathLike:
 
 
 def get_plugin_key_from_pom() -> str:
-    """ Get Plugin key from Pom.xml
+    """Get Plugin key from Pom.xml
 
     This function reads the pom and analyses which plugin will be built.
     """
@@ -65,7 +65,7 @@ def find_maven_project_root(working_path: pathlib.Path = pathlib.Path(".")) -> p
 def _walk_up(
     start_path: pathlib.Path = pathlib.Path(),
 ) -> typing.Tuple[pathlib.Path, typing.Tuple[os.PathLike], typing.Tuple[os.PathLike]]:
-    """ Generator for walking up a file path. os.walk like behavior
+    """Generator for walking up a file path. os.walk like behavior
 
     Args: start_path: a os.PathLike path to start from
 

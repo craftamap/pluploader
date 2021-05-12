@@ -39,8 +39,7 @@ class ModuleDto:
 
 @dataclasses.dataclass()
 class PluginDto:
-    """ This class represents a plugin given by the UPM/Plugin API
-    """
+    """This class represents a plugin given by the UPM/Plugin API"""
 
     key: str
     name: str
@@ -51,8 +50,7 @@ class PluginDto:
     modules: typing.Optional[typing.List[ModuleDto]]
 
     def print_table(self, print_modules: bool):
-        """Prints table view of plugin information
-        """
+        """Prints table view of plugin information"""
         grid = Table.grid(expand=True)
         grid.add_column(style="blue")
         grid.add_column()
@@ -134,8 +132,7 @@ class UpmApi:
         self.base_url: furl = base_url
 
     def get_token(self) -> str:
-        """ Get token from api endpoint
-        """
+        """Get token from api endpoint"""
         token_url: furl = self.base_url.copy()
         token_url.add(path=self.UPM_API_ENDPOINT)
         token_url.set(args={"os_authType": "basic"})
@@ -144,8 +141,7 @@ class UpmApi:
         return token
 
     def upload_plugin(self, files: typing.Dict[str, typing.BinaryIO], token: str) -> typing.Tuple[int, typing.Any]:
-        """ Upload plugin
-        """
+        """Upload plugin"""
         upload_url = self.base_url.copy()
         upload_url.set(args={"token": token})
         upload_url.add(path=self.UPM_API_ENDPOINT)
@@ -165,7 +161,7 @@ class UpmApi:
         return 100, progress_rd
 
     def get_all_plugins(self, user_installed: bool = True) -> typing.List[PluginDto]:
-        """ Gets a list of all installed plugins from the api and returns it
+        """Gets a list of all installed plugins from the api and returns it
         If user_installed is set true (default), only user installed plugins are listed
         """
         request_url = self.base_url.copy()
@@ -177,7 +173,7 @@ class UpmApi:
         return return_obj
 
     def get_plugin(self, plugin_key: str) -> PluginDto:
-        """ Gets Plugin info by using the UPM_API_ENDPOINT/plugin-key/ endpoint and
+        """Gets Plugin info by using the UPM_API_ENDPOINT/plugin-key/ endpoint and
         returns it as a PluginDto
         """
         request_url = self.base_url.copy()
@@ -193,7 +189,7 @@ class UpmApi:
         return self._modify_plugin(plugin_key, mod)
 
     def _modify_plugin(self, plugin_key: str, modifications: dict) -> PluginDto:
-        """ Puts Changes to plugin by using the UPM_API_ENDPOINT/plugin-key/ endpoint and
+        """Puts Changes to plugin by using the UPM_API_ENDPOINT/plugin-key/ endpoint and
         returns new infos as a PluginDto
         """
         request_url = self.base_url.copy()
@@ -205,16 +201,18 @@ class UpmApi:
         return return_obj
 
     def uninstall_plugin(self, plugin_key: str) -> bool:
-        """ Uninstalls a plugin by using the UPM_API_ENDPOINT/plugin-key/ endpoint
-        """
+        """Uninstalls a plugin by using the UPM_API_ENDPOINT/plugin-key/ endpoint"""
         request_url = self.base_url.copy()
         request_url.add(path=self.UPM_API_ENDPOINT)
         request_url.join(plugin_key + "-key")
         response = requests.delete(request_url.url)
         return response.status_code == 204
 
-    def module_status(self, previous_request: dict,) -> typing.Tuple[int, int, typing.List[ModuleDto]]:
-        """ Returns the module status of an plugin based on a request/dict containing an PluginDto
+    def module_status(
+        self,
+        previous_request: dict,
+    ) -> typing.Tuple[int, int, typing.List[ModuleDto]]:
+        """Returns the module status of an plugin based on a request/dict containing an PluginDto
         returns an tuple containing
             1. number of all plugins
             2. number of enabled plugins

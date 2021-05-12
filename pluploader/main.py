@@ -57,8 +57,7 @@ LOGO = f"""
 
 
 def main():
-    """ Reads config and passes it to app
-    """
+    """Reads config and passes it to app"""
     config_locations = []
     home_cfg = pathlib.Path().home() / pathlib.Path(".pluprc")
     if home_cfg.exists():
@@ -113,7 +112,12 @@ def furl_callback(value: str) -> furl.furl:
 @app.callback(cls=DefaultGroup)
 def root(
     ctx: typer.Context,
-    version: typing.Optional[bool] = typer.Option(False, "--version", callback=version_callback, is_eager=True,),
+    version: typing.Optional[bool] = typer.Option(
+        False,
+        "--version",
+        callback=version_callback,
+        is_eager=True,
+    ),
     base_url: str = typer.Option(
         "http://localhost:8090",
         help="Set the base-url of your instance. This flag will overwrite scheme, host, path and port, if those are set in"
@@ -121,13 +125,21 @@ def root(
         callback=furl_callback,
         envvar="PLUP_BASEURL",
     ),
-    user: str = typer.Option("admin", help="Set the username of the user you want to use", envvar="PLUP_USER",),
-    password: str = typer.Option("admin", help="Set the password of the user you want to use", envvar="PLUP_PASSWORD",),
+    user: str = typer.Option(
+        "admin",
+        help="Set the username of the user you want to use",
+        envvar="PLUP_USER",
+    ),
+    password: str = typer.Option(
+        "admin",
+        help="Set the password of the user you want to use",
+        envvar="PLUP_PASSWORD",
+    ),
     port: typing.Optional[int] = typer.Option(None),
     ask_for_password: typing.Optional[bool] = typer.Option(False, help="Asks user for password interactively"),
     logo: bool = typer.Option(True, help="Print lively apps logo"),
 ):
-    """ A simple command line plugin uploader/installer/manager for atlassian product server
+    """A simple command line plugin uploader/installer/manager for atlassian product server
     instances (Confluence/Jira) written in python(3).
     """
     if logo and ctx.invoked_subcommand != "api":
@@ -139,8 +151,7 @@ def root(
 
 
 def _base_url_from_args(base_url: str, user: str, password: str, port: typing.Optional[int]) -> furl.furl:
-    """creates furl instance from defaults, config(via defaults) and args
-    """
+    """creates furl instance from defaults, config(via defaults) and args"""
     base_url.username = user
     base_url.password = password
     if port is not None:
@@ -189,8 +200,7 @@ def plugin_info(
     show_modules: bool = typer.Option(False, help="show modules of plugin as well"),
     web: bool = typer.Option(False, help="open upm in web browser after showing info"),
 ):
-    """ prints information of the plugin specified by the plugin key
-    """
+    """prints information of the plugin specified by the plugin key"""
     if plugin is None:
         try:
             plugin = pathutil.get_plugin_key_from_pom()
@@ -285,8 +295,7 @@ def uninstall_plugin(
     plugin: str = typer.Argument(None, help="the plugin key"),
     web: bool = typer.Option(False, help="open upm in web browser after uninstalling plugin"),
 ):
-    """ Uninstalls a plugin
-    """
+    """Uninstalls a plugin"""
     if plugin is None:
         try:
             plugin = pathutil.get_plugin_key_from_pom()
@@ -349,14 +358,18 @@ Warning: mpac-id is considered unstable; consider using --mpac-key
 The mpac-key is the app key.\n
 To specify the version, use the == syntax: 1213057==3.10.1 will download 3.10.1""",
     ),
-    interactive: typing.Optional[bool] = typer.Option(False, "--interactive", "-i", help="confirm the upload of the app",),
+    interactive: typing.Optional[bool] = typer.Option(
+        False,
+        "--interactive",
+        "-i",
+        help="confirm the upload of the app",
+    ),
     reinstall: typing.Optional[bool] = typer.Option(
         False, "--reinstall", help="Plugin will be uninstalled before it will be installed"
     ),
     web: bool = typer.Option(False, help="open upm in web browser after installing plugin"),
 ):
-    """installs the plugin of the current maven project or a specified one; you can also omit install
-    """
+    """installs the plugin of the current maven project or a specified one; you can also omit install"""
     base_url: furl.furl = ctx.obj.get("base_url")
     if cloud:
         if plugin_uri is None:
@@ -532,11 +545,18 @@ def api(
     ctx: typer.Context,
     endpoint: str = typer.Argument(..., help="path of the endpoint you want to use"),
     body: str = typer.Argument("", help="body of the request you want to send"),
-    method: str = typer.Option("GET", "-X", help="choose http method",),
-    header: typing.List[str] = typer.Option([], "-H", help="Provide additional headers",),
+    method: str = typer.Option(
+        "GET",
+        "-X",
+        help="choose http method",
+    ),
+    header: typing.List[str] = typer.Option(
+        [],
+        "-H",
+        help="Provide additional headers",
+    ),
 ):
-    """ Make an authenticated request to the atlassian product server
-    """
+    """Make an authenticated request to the atlassian product server"""
     base_url: furl.furl = ctx.obj.get("base_url")
 
     session = requests.Session()
@@ -555,12 +575,15 @@ def api(
     print(response.text)
 
 
-@app.command("rpc",)
+@app.command(
+    "rpc",
+)
 def rpc(
     ctx: typer.Context,
     method: str = typer.Argument(..., help="method you want to execute on the remote confluence"),
     arguments: typing.List[str] = typer.Argument(
-        ..., help="all arguments you want to pass to the method with. For classes/objects, provide a json string.",
+        ...,
+        help="all arguments you want to pass to the method with. For classes/objects, provide a json string.",
     ),
 ):
     """

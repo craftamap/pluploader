@@ -43,8 +43,7 @@ class TimebombLicensesEnum(str, Enum):
 
 @app_license.callback()
 def safemode(ctx: typer.Context):
-    """ Get and set license information for apps
-    """
+    """Get and set license information for apps"""
 
 
 @app_license.command("info")

@@ -16,7 +16,7 @@ app_job = typer.Typer()
 
 @app_job.callback()
 def job_root(ctx: typer.Context):
-    """ Manage and Run Jobs (Confluence only - Beta feature)
+    """Manage and Run Jobs (Confluence only - Beta feature)
     In order to use this feature, it is required that you users locale is set to english
     """
 
@@ -28,8 +28,7 @@ def job_list(
     print_all_infos: typing.Optional[bool] = typer.Option(False),
     web: bool = typer.Option(False, help='open "Scheduled Jobs" in web browser after showing list'),
 ):
-    """ Confluence only, list all jobs available
-    """
+    """Confluence only, list all jobs available"""
     try:
         with JobsScraper(ctx.obj.get("base_url")) as jobs_scraper:
 
@@ -135,8 +134,7 @@ def job_run(
     group: typing.Optional[str] = typer.Option(None),
     web: bool = typer.Option(False, help='open "Scheduled Jobs" in web browser after running job'),
 ):
-    """ Confluence only, runs a specified job
-    """
+    """Confluence only, runs a specified job"""
     try:
         logging.info("Getting jobs... This can take some time - please wait!")
         with JobsScraper(ctx.obj.get("base_url")) as jobs_scraper:
@@ -197,8 +195,7 @@ def job_disable(
     group: typing.Optional[str] = typer.Option(None),
     web: bool = typer.Option(False, help='open "Scheduled Jobs" in web browser after disabling job'),
 ):
-    """ Confluence only, disable a specified job
-    """
+    """Confluence only, disable a specified job"""
     try:
         with JobsScraper(ctx.obj.get("base_url")) as jobs_scraper:
             logging.info("Getting jobs... This can take some time - please wait!")
@@ -232,8 +229,7 @@ def job_enable(
     group: typing.Optional[str] = typer.Option(None),
     web: bool = typer.Option(False, help='open "Scheduled Jobs" in web browser after enabling job'),
 ):
-    """ Confluence only, enable a specified job
-    """
+    """Confluence only, enable a specified job"""
     try:
         with JobsScraper(ctx.obj.get("base_url")) as jobs_scraper:
             logging.info("Getting jobs... This can take some time - please wait!")

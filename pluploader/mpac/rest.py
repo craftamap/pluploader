@@ -84,7 +84,7 @@ class Asset:
 
 
 def get_app_version(addonKey: str, version: str = "latest", hosting: str = "server") -> AddonVersion:
-    """ Choosing "server" as default hosting option for now... We propably need to change this
+    """Choosing "server" as default hosting option for now... We propably need to change this
     in 2022?, when you people will stop publishing server versions
     """
     url: furl
