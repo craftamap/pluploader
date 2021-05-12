@@ -204,7 +204,7 @@ def timebomb(
 
 @app_access_token.callback()
 def access_token(ctx: typer.Context):
-    """ Get and set information about cloud access tokens 
+    """ Get and set information about cloud access tokens
     """
 
 
