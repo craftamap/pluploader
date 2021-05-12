@@ -61,12 +61,18 @@ You can specify various global options:
 - `--base-url <base-url>`, default: `http://localhost:8090`
 - `--user <username>`, default: `admin`
 - `--password <password>`, default: `admin`  
-  If you do not want to put your password in the command line plaintext, you can
-  also use...
+  It is recommended using Access Tokens instead of your real password. Access Tokens
+  can be created for cloud instances called 
+  [API Tokens here](https://id.atlassian.com/manage-profile/security/api-tokens).
+  Newer versions of the server / datacenter products also suport creating Access Tokens
+  called Personal Access Tokens - 
+  [Read more about them here](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html).  
+  If you do not want to put your password or access token in the command line 
+  plaintext, you can also use...
 - `--ask-for-password`
 
-All Global Options can be overwritten by using a configuration file. See more in
-[Configuration](#Configuration)
+All Global Options can be overwritten by using a configuration file or enviroment variables.
+See more in [Configuration](#Configuration) and [Environment variables](#Environment Variables)
 
 ### Configuration
 
