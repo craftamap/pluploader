@@ -24,6 +24,9 @@ jobs:
     - name: Run linters
       run: |
         poetry install
+        poetry run black --check pluploader/
+        poetry run isort --check pluploader/
+        poetry run flake8 --count pluploader/
     - name: Run pluploader --version
       run: |
         poetry run pluploader --version
