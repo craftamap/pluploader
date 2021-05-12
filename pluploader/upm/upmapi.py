@@ -208,10 +208,7 @@ class UpmApi:
         response = requests.delete(request_url.url)
         return response.status_code == 204
 
-    def module_status(
-        self,
-        previous_request: dict,
-    ) -> typing.Tuple[int, int, typing.List[ModuleDto]]:
+    def module_status(self, previous_request: dict,) -> typing.Tuple[int, int, typing.List[ModuleDto]]:
         """Returns the module status of an plugin based on a request/dict containing an PluginDto
         returns an tuple containing
             1. number of all plugins
