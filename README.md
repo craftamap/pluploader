@@ -62,12 +62,12 @@ You can specify various global options:
 - `--user <username>`, default: `admin`
 - `--password <password>`, default: `admin`  
   It is recommended using Access Tokens instead of your real password. Access Tokens
-  can be created for cloud instances called 
+  can be created for cloud instances called
   [API Tokens here](https://id.atlassian.com/manage-profile/security/api-tokens).
   Newer versions of the server / datacenter products also suport creating Access Tokens
-  called Personal Access Tokens - 
+  called Personal Access Tokens -
   [Read more about them here](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html).  
-  If you do not want to put your password or access token in the command line 
+  If you do not want to put your password or access token in the command line
   plaintext, you can also use...
 - `--ask-for-password`
 
