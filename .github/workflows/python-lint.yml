@@ -26,4 +26,4 @@ jobs:
         poetry install
     - name: Run pluploader --version
       run: |
-        pluploader --version
+        poetry run pluploader --version
