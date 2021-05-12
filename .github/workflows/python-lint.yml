@@ -19,6 +19,8 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Setup Poetry
+      uses: Gr1N/setup-poetry@v4
     - name: Run linters
       run: |
         poetry install
