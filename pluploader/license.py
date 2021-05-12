@@ -8,7 +8,7 @@ from rich.console import Console
 from rich.table import Table
 
 from .upm.upmapi import UpmApi
-from .upm.upmcloudapi import UpmCloudApi, Token
+from .upm.upmcloudapi import Token, UpmCloudApi
 from .util import browser, pathutil
 
 app_license = typer.Typer()
