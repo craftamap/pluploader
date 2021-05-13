@@ -108,3 +108,17 @@ class UpmCloudApi(UpmApi):
 
         except Exception:
             raise ValueError(response.status_code, response.content)
+
+    def delete_access_token(
+        self, plugin_key: str,
+    ):
+        request_url = self.base_url.copy()
+        request_url.add(path=self.UPM_API_ENDPOINT)
+        request_url.add(path="license-tokens")
+        request_url.add(path=f"{plugin_key}-key")
+        try:
+            response = requests.delete(request_url.url)
+            if response.status_code > 299:
+                raise (Exception())
+        except Exception:
+            raise ValueError(response.status_code, response.content)

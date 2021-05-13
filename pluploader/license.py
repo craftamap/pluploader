@@ -298,6 +298,12 @@ def access_token_update(
             sys.exit(1)
     try:
         upm = UpmCloudApi(ctx.obj.get("base_url"))
+        if not token:
+            logging.warn("empty access token specified. Deleting access token")
+            upm.delete_access_token(plugin)
+            logging.warn("Access Token successfully deleted")
+            return
+
         access_token = upm.update_access_token(plugin, token, state)
     except requests.exceptions.ConnectionError:
         logging.error("Could not connect to host - check your base-url")
