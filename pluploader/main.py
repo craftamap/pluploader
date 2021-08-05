@@ -41,20 +41,6 @@ app.add_typer(app_safemode, name="safe-mode")
 app.add_typer(app_job, name="job")
 app.add_typer(app_license, name="license")
 
-LOGO = f"""
-{Fore.YELLOW} ))))          {Fore.RED}           ((((
-{Fore.YELLOW} )))))))       {Fore.RED}        (((((((
-{Fore.YELLOW}  ))))))))     {Fore.RED}      ((((((((
-{Fore.YELLOW}  ))))))))))   {Fore.RED}    ((((((((((
-{Fore.YELLOW}   ))))))))))) {Fore.RED}  (((((((((((
-{Fore.YELLOW}    ))))))))))){Fore.GREEN}|{Fore.RED}(((((((((((
-{Fore.YELLOW}     ))))))))){Fore.GREEN}|||{Fore.RED}(((((((((
-{Fore.YELLOW}      ))))))){Fore.GREEN}|||||{Fore.RED}(((((((
-{Fore.YELLOW}        )))){Fore.GREEN}|||||||{Fore.RED}((((
-{Fore.YELLOW}          )){Fore.GREEN}|||||||{Fore.RED}((
-{Fore.YELLOW}            {Fore.RED}/{Fore.GREEN}|||||{Fore.YELLOW}\\
-{Fore.RESET}"""
-
 
 def main():
     """Reads config and passes it to app"""
@@ -124,13 +110,11 @@ def root(
     password: str = typer.Option("admin", help="Set the password of the user you want to use", envvar="PLUP_PASSWORD",),
     port: typing.Optional[int] = typer.Option(None),
     ask_for_password: typing.Optional[bool] = typer.Option(False, help="Asks user for password interactively"),
-    logo: bool = typer.Option(True, help="Print lively apps logo"),
+    logo: bool = typer.Option(True, help="Print logo (deprecated)"),
 ):
     """A simple command line plugin uploader/installer/manager for atlassian product server
     instances (Confluence/Jira) written in python(3).
     """
-    if logo and ctx.invoked_subcommand != "api":
-        print(LOGO)
     if ask_for_password:
         password = typer.prompt("Password: ", hide_input=True)
     burl: furl.furl = _base_url_from_args(base_url, user, password, port)
