@@ -58,15 +58,22 @@ For a in-depth explanation, see `pluploader --help`
 
 You can specify various global options:
 
-- `--base-url <base-url>`, default: `http://localhost:8090`
+- `--base-url <base-url>`, default: `http://localhost:8090`  
+  For Confluence Cloud Instances, make sure to append the path, `/wiki`, to your base url.
 - `--user <username>`, default: `admin`
 - `--password <password>`, default: `admin`  
-  If you do not want to put your password in the command line plaintext, you can
-  also use...
+  It is recommended to use Access Tokens instead of your password.
+  Newer versions of the server / datacenter products support creating Access Tokens
+  called Personal Access Tokens -
+  [Read more about them here](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html).  
+  For cloud instances, it is required to use Access Tokens. Those are called
+  [API Tokens and can be created here](https://id.atlassian.com/manage-profile/security/api-tokens).
+  If you do not want to put your password or access token in the command line
+  plaintext, you can also use...
 - `--ask-for-password`
 
-All Global Options can be overwritten by using a configuration file. See more in
-[Configuration](#Configuration)
+All Global Options can be overwritten by using a configuration file or enviroment variables.
+See more in [Configuration](#Configuration) and [Environment variables](#Environment Variables)
 
 ### Configuration
 
