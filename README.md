@@ -215,7 +215,7 @@ To get the current license information:
 pluploader license info com.example.plugin.key
 ```
 
-To set a lciense, use the `update` functionality.
+To set a license, use the `update` functionality.
 
 ```bash
 pluploader license update com.example.plugin.key --license "AAA..."
@@ -242,6 +242,17 @@ To remove an applied license, you can use:
 
 ```bash
 pluploader license delete com.example.plugin.key
+```
+
+#### Access Tokens (Cloud Development Licenses)
+
+You can also use pluploader to list, get, update/set and delete access tokens of apps.
+
+```bash
+pluploader license access-token list
+pluploader license access-token info com.example.plugin.key
+pluploader license access-token update com.example.plugin.key --token "token"
+pluploader license access-token delete com.example.plugin.key
 ```
 
 ### API
