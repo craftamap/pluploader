@@ -8,10 +8,13 @@ from rich.console import Console
 from rich.table import Table
 
 from .upm.upmapi import UpmApi
+from .upm.upmcloudapi import Token, UpmCloudApi
 from .util import browser, pathutil
 
 app_license = typer.Typer()
 
+app_access_token = typer.Typer()
+app_license.add_typer(app_access_token, name="access-token")
 
 timebomb_licenses = {
     "threehours": (
@@ -42,8 +45,9 @@ class TimebombLicensesEnum(str, Enum):
 
 
 @app_license.callback()
-def safemode(ctx: typer.Context):
-    """Get and set license information for apps"""
+def license(ctx: typer.Context):
+    """Get and set license information for apps
+    """
 
 
 @app_license.command("info")
@@ -194,5 +198,164 @@ def timebomb(
         grid.add_row(key.replace("_", " "), f"{value}")
     console = Console()
     console.print(grid)
+    if web:
+        browser.open_web_upm(ctx.obj.get("base_url"))
+
+
+@app_access_token.callback()
+def access_token(ctx: typer.Context):
+    """ Get and set information about cloud access tokens
+    """
+
+
+@app_access_token.command("list")
+def access_token_list(
+    ctx: typer.Context, web: bool = typer.Option(False, help="open upm in web browser after showing info"),
+):
+    """ lists all access tokens for the instance
+    """
+    try:
+        upm = UpmCloudApi(ctx.obj.get("base_url"))
+        access_tokens = upm.list_access_token()
+    except requests.exceptions.ConnectionError:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except Exception as exc:
+        logging.error("An error occured - check your credentials")
+        logging.error("%s", exc)
+        sys.exit(1)
+    table = Table(expand=True)
+    table.add_column("pluginKey", style="blue")
+    table.add_column("token")
+    table.add_column("state")
+    table.add_column("valid")
+    for access_token in access_tokens:
+        table.add_row(access_token.pluginKey, access_token.token, access_token.state, f"{access_token.valid}")
+    console = Console()
+    console.print(table)
+    if web:
+        browser.open_web_upm(ctx.obj.get("base_url"))
+
+
+@app_access_token.command("info")
+def access_token_info(
+    ctx: typer.Context,
+    plugin: str = typer.Argument(None, help="the plugin key"),
+    web: bool = typer.Option(False, help="open upm in web browser after showing info"),
+):
+    """ get information about a specific access token by specifing the plugin key
+    """
+    if plugin is None:
+        try:
+            plugin = pathutil.get_plugin_key_from_pom()
+        except FileNotFoundError:
+            logging.error("Could not find the plugin you want to update the license of. Are you in a maven directory?")
+            sys.exit(1)
+        except pathutil.PluginKeyNotFoundError:
+            logging.error("Could not find the plugin you want to update the license of. Is the plugin key set in the pom.xml?")
+            sys.exit(1)
+    try:
+        upm = UpmCloudApi(ctx.obj.get("base_url"))
+        access_token = upm.get_access_token(plugin)
+    except requests.exceptions.ConnectionError:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except Exception as exc:
+        logging.error("An error occured - check your credentials")
+        logging.error("%s", exc)
+        sys.exit(1)
+    table = Table(expand=True)
+    table.add_column("pluginKey", style="blue")
+    table.add_column("token")
+    table.add_column("state")
+    table.add_column("valid")
+    for t in [access_token]:
+        table.add_row(t.pluginKey, t.token, t.state, f"{t.valid}")
+    console = Console()
+    console.print(table)
+    if web:
+        browser.open_web_upm(ctx.obj.get("base_url"))
+
+
+@app_access_token.command("update")
+def access_token_update(
+    ctx: typer.Context,
+    plugin: str = typer.Argument(None, help="the plugin key"),
+    token: str = typer.Option(..., help="the access token"),
+    web: bool = typer.Option(False, help="open upm in web browser after showing info"),
+    state: Token.TokenState = typer.Option(Token.TokenState.ACTIVE_SUBSCRIPTION.value),
+):
+    """ get information about a specific access token by specifing the plugin key
+    """
+    if plugin is None:
+        try:
+            plugin = pathutil.get_plugin_key_from_pom()
+        except FileNotFoundError:
+            logging.error("Could not find the plugin you want to update the license of. Are you in a maven directory?")
+            sys.exit(1)
+        except pathutil.PluginKeyNotFoundError:
+            logging.error("Could not find the plugin you want to update the license of. Is the plugin key set in the pom.xml?")
+            sys.exit(1)
+    try:
+        upm = UpmCloudApi(ctx.obj.get("base_url"))
+        if not token:
+            logging.warn("empty access token specified. Deleting access token")
+            upm.delete_access_token(plugin)
+            logging.warn("Access Token successfully deleted")
+            return
+
+        access_token = upm.update_access_token(plugin, token, state)
+    except requests.exceptions.ConnectionError:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except Exception as exc:
+        logging.error("An error occured - check your credentials")
+        logging.error("%s", exc)
+        sys.exit(1)
+
+    table = Table(expand=True)
+    table.add_column("pluginKey", style="blue")
+    table.add_column("token")
+    table.add_column("state")
+    table.add_column("valid")
+    for t in [access_token]:
+        table.add_row(t.pluginKey, t.token, t.state, f"{t.valid}")
+    console = Console()
+    console.print(table)
+    if web:
+        browser.open_web_upm(ctx.obj.get("base_url"))
+
+
+@app_access_token.command("delete")
+def access_token_delete(
+    ctx: typer.Context,
+    plugin: str = typer.Argument(None, help="the plugin key"),
+    web: bool = typer.Option(False, help="open upm in web browser after showing info"),
+):
+    """ get information about a specific access token by specifing the plugin key
+    """
+    if plugin is None:
+        try:
+            plugin = pathutil.get_plugin_key_from_pom()
+        except FileNotFoundError:
+            logging.error("Could not find the plugin you want to update the license of. Are you in a maven directory?")
+            sys.exit(1)
+        except pathutil.PluginKeyNotFoundError:
+            logging.error("Could not find the plugin you want to update the license of. Is the plugin key set in the pom.xml?")
+            sys.exit(1)
+    try:
+        upm = UpmCloudApi(ctx.obj.get("base_url"))
+        logging.info("Deleting access token")
+        upm.delete_access_token(plugin)
+        logging.info("Access Token successfully deleted")
+
+    except requests.exceptions.ConnectionError:
+        logging.error("Could not connect to host - check your base-url")
+        sys.exit(1)
+    except Exception as exc:
+        logging.error("An error occured - check your credentials")
+        logging.error("%s", exc)
+        sys.exit(1)
+
     if web:
         browser.open_web_upm(ctx.obj.get("base_url"))

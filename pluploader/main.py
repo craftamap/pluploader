@@ -15,7 +15,6 @@ import requests
 import typer
 import yaml
 from click_default_group import DefaultGroup
-from colorama import Fore
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.progress import BarColumn, Progress

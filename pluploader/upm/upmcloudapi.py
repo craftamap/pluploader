@@ -1,10 +1,32 @@
+import dataclasses
 import typing
+from enum import Enum
 
 import requests
 from furl import furl
 
 from .exceptions import UploadFailedException
 from .upmapi import PluginDto, UpmApi
+
+
+@dataclasses.dataclass(frozen=True)
+class Token:
+    pluginKey: str
+    token: str
+    state: str
+    valid: bool
+
+    @classmethod
+    def decode(cls, obj: dict) -> "Token":
+        return cls(pluginKey=obj.get("pluginKey"), token=obj.get("token"), state=obj.get("state"), valid=obj.get("valid"),)
+
+    class TokenState(Enum):
+        NONE = "NONE"
+        ACTIVE_TRIAL = "ACTIVE_TRIAL"
+        INACTIVE_TRIAL = "INACTIVE_TRIAL"
+        ACTIVE_SUBSCRIPTION = "ACTIVE_SUBSCRIPTION"
+        ACTIVE_SUBSCRIPTION_CANCELLED = "ACTIVE_SUBSCRIPTION_CANCELLED"
+        INACTIVE_SUBSCRIPTION = "INACTIVE_SUBSCRIPTION"
 
 
 class UpmCloudApi(UpmApi):
@@ -42,3 +64,61 @@ class UpmCloudApi(UpmApi):
             progress = int(response_json.get("status", {}).get("amountDownloaded", 0))
             return progress, None
         return 0, None
+
+    def list_access_token(self) -> typing.List[Token]:
+        request_url = self.base_url.copy()
+        request_url.add(path=self.UPM_API_ENDPOINT)
+        request_url.add(path="license-tokens")
+        try:
+            response = requests.get(request_url.url)
+            return [Token.decode(obj) for obj in response.json().get("tokens")]
+        except Exception:
+            raise ValueError(response.status_code, response.content)
+
+    def get_access_token(self, plugin_key: str) -> Token:
+        request_url = self.base_url.copy()
+        request_url.add(path=self.UPM_API_ENDPOINT)
+        request_url.add(path="license-tokens")
+        request_url.add(path=f"{plugin_key}-key")
+        try:
+            response = requests.get(request_url.url)
+            return Token.decode(response.json())
+        except Exception:
+            raise ValueError(response.status_code, response.content)
+
+    def update_access_token(
+        self, plugin_key: str, token: str, state: Token.TokenState = Token.TokenState.ACTIVE_SUBSCRIPTION
+    ) -> Token:
+        request_url = self.base_url.copy()
+        request_url.add(path=self.UPM_API_ENDPOINT)
+        request_url.add(path="license-tokens")
+        body = {
+            "pluginKey": plugin_key,
+            "token": token,
+            "state": state.value,
+        }
+        headers = {
+            "Content-Type": "application/vnd.atl.plugins+json",
+        }
+        try:
+            response = requests.post(request_url.url, json=body, headers=headers)
+            if response.status_code > 299:
+                raise (Exception())
+            return Token.decode(response.json())
+
+        except Exception:
+            raise ValueError(response.status_code, response.content)
+
+    def delete_access_token(
+        self, plugin_key: str,
+    ):
+        request_url = self.base_url.copy()
+        request_url.add(path=self.UPM_API_ENDPOINT)
+        request_url.add(path="license-tokens")
+        request_url.add(path=f"{plugin_key}-key")
+        try:
+            response = requests.delete(request_url.url)
+            if response.status_code > 299:
+                raise (Exception())
+        except Exception:
+            raise ValueError(response.status_code, response.content)
