@@ -3,6 +3,7 @@ server applications.
 """
 
 import pathlib
+from dataclasses import dataclass
 from zipfile import ZipFile
 
 from bs4 import BeautifulSoup
@@ -28,6 +29,29 @@ def _get_atlassian_plugin_xml_from_jar_path(path: pathlib.Path) -> str:
             return atlassian_plugin_xml.read()
 
 
+@dataclass(frozen=True)
+class PluginXmlData:
+    key: str
+    name: str
+    version: str
+
+
+def _extract_data(atlassian_plugin_xml: str) -> PluginXmlData:
+    """ Extracts data from the atlassian_plugin_xml and returns a PluginXmlData
+    Args:
+        atlassian_plugin_xml: the content of an atlassian_plugin.xml
+    """
+
+    soup = BeautifulSoup(atlassian_plugin_xml, "xml")
+    plugin_key = soup.find("atlassian-plugin").get("key")
+    if plugin_key is None:
+        raise PluginKeyNotFoundError()
+    name = soup.find("atlassian-plugin").get("key")
+    version = soup.find("version").string
+
+    return PluginXmlData(plugin_key, name, version)
+
+
 def _find_plugin_key(atlassian_plugin_xml: str) -> str:
     """Finds the plugin key in an atlassian_plugin_xml
     Args:
@@ -45,7 +69,7 @@ def _find_plugin_key(atlassian_plugin_xml: str) -> str:
 
 
 def get_plugin_key_from_jar_path(path: pathlib.Path) -> str:
-    """Tries to find the plugin key of an atlassian server app plugin by providing an path to the jar.
+    """Tries to find the plugin key of an atlassian server app plugin by providing the path to its jar.
     Args:
         path (pathlib.Param): the path to the jar file
     Returns:
@@ -57,4 +81,21 @@ def get_plugin_key_from_jar_path(path: pathlib.Path) -> str:
         pluploader.pathutil.PluginKeyNotFoundError: If the PluginKey could not be found
     """
     atlas_xml = _get_atlassian_plugin_xml_from_jar_path(path)
-    return _find_plugin_key(atlas_xml)
+    data = _extract_data(atlas_xml)
+    return data.key
+
+
+def get_plugin_info_from_jar_path(path: pathlib.Path) -> PluginXmlData:
+    """Tries to find various information of an atlassian server app plugin by providing the path to its jar.
+    Args:
+        path (pathlib.Param): the path to the jar file
+    Returns:
+        PluginKeyData: The Plugin Key
+    Raises:
+        FileNotFoundError: If the file of path is not found
+        zipfile.BadZipFile: If the provided file of path is not a zip file
+        KeyError: If no atlassian_plugin.xml is existing inside the zip/jar
+        pluploader.pathutil.PluginKeyNotFoundError: If the PluginKey could not be found
+    """
+    atlas_xml = _get_atlassian_plugin_xml_from_jar_path(path)
+    return _extract_data(atlas_xml)

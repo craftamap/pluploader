@@ -15,6 +15,7 @@ import requests
 import typer
 import yaml
 from click_default_group import DefaultGroup
+from packaging.version import parse as version_parse
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.progress import BarColumn, Progress
@@ -26,7 +27,7 @@ from .license import app_license
 from .mpac import download
 from .mpac.exceptions import MpacAppNotFoundError, MpacAppVersionNotFoundError
 from .safemode import app_safemode
-from .upm.upmapi import UpmApi
+from .upm.upmapi import UpmApi, PluginDto
 from .upm.upmcloudapi import UpmCloudApi
 from .util import atlassian_jar as jar
 from .util import browser, pathutil
@@ -429,11 +430,11 @@ def install_server(
             sys.exit()
 
     upm = UpmApi(base_url)
+    plugin_info = jar.get_plugin_info_from_jar_path(plugin_path)
     if reinstall:
         try:
-            plugin_key = jar.get_plugin_key_from_jar_path(plugin_path)
             try:
-                status = upm.uninstall_plugin(plugin_key)
+                status = upm.uninstall_plugin(plugin_info.key)
             except requests.exceptions.ConnectionError:
                 logging.error("Could not connect to host - check your base-url")
                 sys.exit(1)
@@ -447,6 +448,20 @@ def install_server(
                 logging.error("An error occurred. The plugin could not be uninstalled.")
         except (FileNotFoundError, zipfile.BadZipFile, KeyError, pathutil.PluginKeyNotFoundError):
             logging.error("Could not get the plugin key of the supplied jar - are you sure you want to upload a plugin, mate?")
+    else:
+        version_to_install = version_parse(plugin_info.version)
+        try:
+            version_installed = version_parse(upm.get_plugin(plugin_info.key).version)
+            if version_installed > version_to_install:
+                logging.warning(
+                    f"Looks like you are trying to install a .jar with a lower version ({version_to_install}) than already "
+                    f"installed ({version_installed}).\n"
+                    "This will most likely fail. Use the --reinstall option to uninstall the plugin first."
+                )
+        except json.decoder.JSONDecodeError:
+            # If we can't get the current plugin, this means that the plugin is installed for the first time.
+            # In this case, we can just ignore the error and perceed
+            pass
 
     displayed_base_url = base_url.copy().remove(username=True, password=True)
     logging.info(f"{pathlib.Path(plugin_path).name} will be uploaded to {displayed_base_url}")
@@ -484,16 +499,20 @@ def install_server(
         for file in files.values():
             file.close()
 
-    if previous_request["enabled"]:
+    plugin_data = PluginDto.decode(previous_request)
+
+    if plugin_data.enabled:
         status = "[green]enabled[reset]!"
     else:
         status = (
             "[red]disabled[reset]! \n"
             "You should check the logs of your Atlassian host to find out why your plugin was disabled."
         )
-
     all_nr, enabled, disabled = upm.module_status(previous_request)
-    logging.info("plugin uploaded and " + status + f" ({enabled} of {all_nr} modules enabled)")
+    logging.info(
+        f"plugin {plugin_data.name} ({plugin_data.key}, v{plugin_data.version}) uploaded"
+        f" and {status} ({enabled} of {all_nr} modules enabled)"
+    )
     if len(disabled) != 0 and len(disabled) != all_nr:
         for module in disabled:
             logging.info(f"   - {module.key} is disabled")
