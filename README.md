@@ -141,7 +141,7 @@ You can work around this by using the configuration file or by using environment
 ### Installing a connect descriptor to a cloud instance.
 
 
-![Uploading to cloud](.github/images/pluploader-demo-5.gif)
+![Uploading to cloud](.github/images/pluploader-demo-4.gif)
 
 pluploader also supports installing atlassian-connect plugins to cloud instances
 by enabling cloud support with `--cloud` and providing the descriptor url with `--plugin-uri`.
@@ -204,8 +204,6 @@ pluploader safe-mode disable --keep-state
 ```
 
 ### Licenses
-
-![Licenses Gif](.github/images/pluploader-demo-4.gif)
 
 You can also use the pluploader to get and set licenses for your plugins.
 
