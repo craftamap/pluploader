@@ -8,7 +8,7 @@
 
 # pluploader
 
-![PyPI version](https://img.shields.io/pypi/v/pluploader?style=flat-square) ![Upload Python Package](https://img.shields.io/github/workflow/status/livelyapps/pluploader/Python%20package/master?style=flat-square)
+![PyPI version](https://img.shields.io/pypi/v/pluploader?style=flat-square) ![Upload Python Package](https://img.shields.io/github/workflow/status/craftamap/pluploader/Python%20package/master?style=flat-square)
 
 ![pluploader](.github/images/pluploader-demo-1.gif)
 
@@ -39,7 +39,7 @@ docker image from dockerhub or github:
 ```bash
 docker pull craftamap/pluploader:latest
 # OR
-docker pull docker.pkg.github.com/livelyapps/pluploader/pluploader:latest
+docker pull ghcr.io/craftamap/pluploader/pluploader:v0.6.0
 ```
 
 pluploader can then be run by executing
