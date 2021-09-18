@@ -39,13 +39,13 @@ docker image from dockerhub or github:
 ```bash
 docker pull craftamap/pluploader:latest
 # OR
-docker pull ghcr.io/craftamap/pluploader/pluploader:v0.6.0
+docker pull ghcr.io/craftamap/pluploader/pluploader:v0.8.0
 ```
 
 pluploader can then be run by executing
 
 ```bash
-docker run -v "$(pwd)":/workdir -it craftamap/pluploader:v0.7.0
+docker run -v "$(pwd)":/workdir -it craftamap/pluploader:v0.8.0
 ```
 
 ## Usage
