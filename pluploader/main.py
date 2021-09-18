@@ -27,7 +27,7 @@ from .license import app_license
 from .mpac import download
 from .mpac.exceptions import MpacAppNotFoundError, MpacAppVersionNotFoundError
 from .safemode import app_safemode
-from .upm.upmapi import UpmApi, PluginDto
+from .upm.upmapi import PluginDto, UpmApi
 from .upm.upmcloudapi import UpmCloudApi
 from .util import atlassian_jar as jar
 from .util import browser, pathutil
@@ -430,7 +430,10 @@ def install_server(
             sys.exit()
 
     upm = UpmApi(base_url)
-    plugin_info = jar.get_plugin_info_from_jar_path(plugin_path)
+    if plugin_path.suffix == ".obr":
+        plugin_info = jar.get_plugin_info_from_obr_path(plugin_path)
+    else:
+        plugin_info = jar.get_plugin_info_from_jar_path(plugin_path)
     if reinstall:
         try:
             try:
