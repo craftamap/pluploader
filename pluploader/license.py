@@ -46,8 +46,7 @@ class TimebombLicensesEnum(str, Enum):
 
 @app_license.callback()
 def license(ctx: typer.Context):
-    """Get and set license information for apps
-    """
+    """Get and set license information for apps"""
 
 
 @app_license.command("info")
@@ -204,16 +203,14 @@ def timebomb(
 
 @app_access_token.callback()
 def access_token(ctx: typer.Context):
-    """ Get and set information about cloud access tokens
-    """
+    """Get and set information about cloud access tokens"""
 
 
 @app_access_token.command("list")
 def access_token_list(
     ctx: typer.Context, web: bool = typer.Option(False, help="open upm in web browser after showing info"),
 ):
-    """ lists all access tokens for the instance
-    """
+    """lists all access tokens for the instance"""
     try:
         upm = UpmCloudApi(ctx.obj.get("base_url"))
         access_tokens = upm.list_access_token()
@@ -243,8 +240,7 @@ def access_token_info(
     plugin: str = typer.Argument(None, help="the plugin key"),
     web: bool = typer.Option(False, help="open upm in web browser after showing info"),
 ):
-    """ get information about a specific access token by specifing the plugin key
-    """
+    """get information about a specific access token by specifing the plugin key"""
     if plugin is None:
         try:
             plugin = pathutil.get_plugin_key_from_pom()
@@ -285,8 +281,7 @@ def access_token_update(
     web: bool = typer.Option(False, help="open upm in web browser after showing info"),
     state: Token.TokenState = typer.Option(Token.TokenState.ACTIVE_SUBSCRIPTION.value),
 ):
-    """ get information about a specific access token by specifing the plugin key
-    """
+    """get information about a specific access token by specifing the plugin key"""
     if plugin is None:
         try:
             plugin = pathutil.get_plugin_key_from_pom()
@@ -332,8 +327,7 @@ def access_token_delete(
     plugin: str = typer.Argument(None, help="the plugin key"),
     web: bool = typer.Option(False, help="open upm in web browser after showing info"),
 ):
-    """ get information about a specific access token by specifing the plugin key
-    """
+    """get information about a specific access token by specifing the plugin key"""
     if plugin is None:
         try:
             plugin = pathutil.get_plugin_key_from_pom()
