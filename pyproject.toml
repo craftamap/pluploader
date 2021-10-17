@@ -22,7 +22,7 @@ configargparse = "^1.2.3"
 furl = "^2.1.0"
 PyYAML = "^5.3.1"
 packaging = "^20.4"
-importlib-metadata = "^1.7.0"
+importlib-metadata = "^4.8.1"
 dataclasses = {version=">=0.7,<0.9", python = "~3.6"}
 typer = "^0.3.2"
 click_default_group = "^1.2.2"
