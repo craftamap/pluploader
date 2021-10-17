@@ -452,9 +452,13 @@ def install_server(
         except (FileNotFoundError, zipfile.BadZipFile, KeyError, pathutil.PluginKeyNotFoundError):
             logging.error("Could not get the plugin key of the supplied jar - are you sure you want to upload a plugin, mate?")
     else:
-        version_to_install = version_parse(plugin_info.version)
+        # WORKAROUND: replace -SNAPSHOT with .dev, to follow python versioning scheme
+        # TODO: find a new library that can parse -SNAPSHOT correctly
+        version_to_install = version_parse(plugin_info.version.replace("-SNAPSHOT", ".dev"))
         try:
-            version_installed = version_parse(upm.get_plugin(plugin_info.key).version)
+            # WORKAROUND: replace -SNAPSHOT with .dev, to follow python versioning scheme
+            # TODO: find a new library that can parse -SNAPSHOT correctly
+            version_installed = version_parse(upm.get_plugin(plugin_info.key).version.replace("-SNAPSHOT", ".dev"))
             if version_installed > version_to_install:
                 logging.warning(
                     f"Looks like you are trying to install a .jar with a lower version ({version_to_install}) than already "
