@@ -55,10 +55,14 @@ class UpmCloudApi(UpmApi):
             # If we got redirected, we assume that we got redirected to the plugins page
             return 100, PluginDto.decode(response.json())
         response_json = response.json()
-        if response_json.get("status", {}).get("done", False) and "exception" in response_json.get("status", {}).get(
-            "subCode", ""
-        ):
-            raise UploadFailedException("Upload was unsuccessful", response_json.get("status", {}).get("subCode"))
+        status = response_json.get("status", {})
+        if status.get("done", False) and status.get("subCode"):
+            raise UploadFailedException(
+                "Upload was unsuccessful",
+                status.get("subCode"),
+                status.get("contentType"),
+                status.get("exception") or status.get("errorMessage"),
+            )
         # TODO: find better check then "type"
         if "type" in response_json:
             progress = int(response_json.get("status", {}).get("amountDownloaded", 0))
