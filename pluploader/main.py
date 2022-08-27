@@ -370,10 +370,10 @@ def install_cloud(base_url: furl.furl, plugin_uri: furl.furl):
         ) as pbar:
             task = pbar.add_task("[blue]Installing...", total=100)
             percentage = 0
-            pbar.update(task, advance=percentage)
+            pbar.update(task, completed=percentage)
             while percentage != 100:
                 percentage, plugin = cloud.install_plugin_get_current_progress(response)
-                pbar.update(task, advance=percentage)
+                pbar.update(task, completed=percentage)
                 if percentage != 100:
                     time.sleep(0.1)
     except requests.exceptions.RequestException as e:
