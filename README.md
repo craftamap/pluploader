@@ -17,8 +17,6 @@ server and cloud instances (Confluence/Jira) written in python(3).
 
 ## Installation
 
-Regulary tested on Linux (Arch Linux), MacOS and Windows 10.
-
 ### pip (recommended)
 
 ```bash
@@ -73,7 +71,7 @@ You can specify various global options:
 - `--ask-for-password`
 
 All Global Options can be overwritten by using a configuration file or enviroment variables.
-See more in [Configuration](#Configuration) and [Environment variables](#Environment Variables)
+See more in [Configuration](#configuration) and [Environment variables](#environment-variables)
 
 ### Configuration
 
