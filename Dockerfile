@@ -1,4 +1,4 @@
-FROM python:3.8
+FROM python:3.11
 
 ARG PL_VERSION=">=0.3"
 
