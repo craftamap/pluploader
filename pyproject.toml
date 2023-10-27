@@ -20,7 +20,7 @@ requests = "^2.24.0"
 colorama = "^0.4.3"
 configargparse = "^1.2.3"
 furl = "^2.1.0"
-PyYAML = "^5.3.1"
+PyYAML = "^6.0.1"
 packaging = "^20.4"
 importlib-metadata = "^4.8.1"
 dataclasses = {version=">=0.7,<0.9", python = "~3.6"}
