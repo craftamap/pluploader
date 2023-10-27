@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pluploader"
-version = "0.8.2"
+version = "0.8.3"
 description = "CLI Confluence/Jira Plugin uploader"
 authors = ["Fabian Siegel <fabian@livelyapps.com>"]
 license = "Apache-2.0"
