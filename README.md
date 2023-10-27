@@ -16,8 +16,14 @@ A advanced command-line plugin uploader/installer/manager for atlassian
 server and cloud instances (Confluence/Jira) written in python(3).
 
 ## Installation
+### pipx (recommended)
 
-### pip (recommended)
+```bash
+pipx install pluploader
+```
+
+
+### pip
 
 ```bash
 pip3 install pluploader
